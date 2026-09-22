@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-bg:        #1A120B;
+  --color-panel:     #241A10;
+  --color-rust:      #C1622B;
+  --color-slate:     #5C7A89;
+  --color-danger:    #D64545;
+  --color-success:   #6B8F71;
+  --color-hairline:  #3A2A1C;
+  --color-parchment: #EDE0D0;
+
+  --font-grotesk: 'Space Grotesk', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+}
+
+
+:root {
+  --bg:       #1A120B;
+  --panel:    #241A10;
+  --text:     #EDE0D0;
+  --rust:     #C1622B;
+  --slate:    #5C7A89;
+  --danger:   #D64545;
+  --success:  #6B8F71;
+  --hairline: #3A2A1C;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  overflow-x: hidden;
+}
+
+.font-mono { font-family: 'IBM Plex Mono', monospace !important; }
+
+/* Leaflet map dark overrides */
+.leaflet-container {
+  background: #0d0906 !important;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.leaflet-tile { filter: brightness(0.6) saturate(0.4); }
+.leaflet-control-attribution { display: none; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--panel); }
+::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 2px; }
+
+/* Alert severity badges */
+.badge-critical { background: #D6454522; color: #D64545; border: 1px solid #D64545; }
+.badge-high     { background: #C1622B22; color: #C1622B; border: 1px solid #C1622B; }
+.badge-medium   { background: #5C7A8922; color: #5C7A89; border: 1px solid #5C7A89; }
+.badge-low      { background: #6B8F7122; color: #6B8F71; border: 1px solid #6B8F71; }
+
+/* Depth gauge track */
+.depth-track {
+  background: linear-gradient(
+    to bottom,
+    #8B7355 0%,    /* surface soil */
+    #6B5040 15%,   /* clay */
+    #4A3728 35%,   /* shale */
+    #3A2A1C 55%,   /* limestone */
+    #2A1A0C 75%,   /* deep shale */
+    #1A0A04 90%,   /* reservoir */
+    #0A0402 100%   /* deep rock */
+  );
+}
