@@ -3,29 +3,28 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg:        #1A120B;
-  --color-panel:     #241A10;
-  --color-rust:      #C1622B;
-  --color-slate:     #5C7A89;
-  --color-danger:    #D64545;
-  --color-success:   #6B8F71;
-  --color-hairline:  #3A2A1C;
-  --color-parchment: #EDE0D0;
+  --color-bg:        #090610;
+  --color-panel:     #130C1E;
+  --color-primary:   #00FF9D;
+  --color-secondary: #8B7EC8;
+  --color-danger:    #FF2A5F;
+  --color-success:   #00FF9D;
+  --color-hairline:  #2A1C3F;
+  --color-foreground:#F4F0FB;
 
   --font-grotesk: 'Space Grotesk', sans-serif;
   --font-mono:    'IBM Plex Mono', monospace;
 }
 
-
 :root {
-  --bg:       #1A120B;
-  --panel:    #241A10;
-  --text:     #EDE0D0;
-  --rust:     #C1622B;
-  --slate:    #5C7A89;
-  --danger:   #D64545;
-  --success:  #6B8F71;
-  --hairline: #3A2A1C;
+  --bg:       #090610;
+  --panel:    #130C1E;
+  --text:     #F4F0FB;
+  --primary:  #00FF9D;
+  --secondary:#8B7EC8;
+  --danger:   #FF2A5F;
+  --success:  #00FF9D;
+  --hairline: #2A1C3F;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,12 +39,14 @@ html, body, #root {
 
 .font-mono { font-family: 'IBM Plex Mono', monospace !important; }
 
-/* Leaflet map dark overrides */
+/* Leaflet map dark overrides - deeper purple/black for seismic vibe using OSM */
 .leaflet-container {
-  background: #0d0906 !important;
+  background: #050308 !important;
   font-family: 'Space Grotesk', sans-serif;
 }
-.leaflet-tile { filter: brightness(0.6) saturate(0.4); }
+.leaflet-tile { 
+  filter: invert(100%) hue-rotate(180deg) brightness(0.6) contrast(1.5) saturate(0.8) sepia(0.2) hue-rotate(240deg); 
+}
 .leaflet-control-attribution { display: none; }
 
 /* Custom scrollbar */
@@ -54,21 +55,32 @@ html, body, #root {
 ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 2px; }
 
 /* Alert severity badges */
-.badge-critical { background: #D6454522; color: #D64545; border: 1px solid #D64545; }
-.badge-high     { background: #C1622B22; color: #C1622B; border: 1px solid #C1622B; }
-.badge-medium   { background: #5C7A8922; color: #5C7A89; border: 1px solid #5C7A89; }
-.badge-low      { background: #6B8F7122; color: #6B8F71; border: 1px solid #6B8F71; }
+.badge-critical { background: #FF2A5F22; color: #FF2A5F; border: 1px solid #FF2A5F; }
+.badge-high     { background: #FF9E0022; color: #FF9E00; border: 1px solid #FF9E00; }
+.badge-medium   { background: #8B7EC822; color: #8B7EC8; border: 1px solid #8B7EC8; }
+.badge-low      { background: #00FF9D22; color: #00FF9D; border: 1px solid #00FF9D; }
 
 /* Depth gauge track */
 .depth-track {
   background: linear-gradient(
     to bottom,
-    #8B7355 0%,    /* surface soil */
-    #6B5040 15%,   /* clay */
-    #4A3728 35%,   /* shale */
-    #3A2A1C 55%,   /* limestone */
-    #2A1A0C 75%,   /* deep shale */
-    #1A0A04 90%,   /* reservoir */
-    #0A0402 100%   /* deep rock */
+    #1A1025 0%,
+    #150D20 20%,
+    #100A19 40%,
+    #0B0712 60%,
+    #07040C 80%,
+    #040206 100%
   );
+}
+
+/* Custom popup overrides to match the new theme */
+.nwis-popup .leaflet-popup-content-wrapper {
+  background: #130C1E;
+  color: #F4F0FB;
+  border: 1px solid #2A1C3F;
+  border-radius: 4px;
+}
+.nwis-popup .leaflet-popup-tip {
+  background: #130C1E;
+  border: 1px solid #2A1C3F;
 }

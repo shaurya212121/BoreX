@@ -15,17 +15,17 @@ function DepthGauge({ current, max }: { current: number; max: number }) {
   const pct = Math.min(100, (current / max) * 100)
   return (
     <div className="flex flex-col h-full">
-      <div className="font-mono text-xs text-slate mb-2 uppercase tracking-widest">Depth</div>
+      <div className="font-mono text-xs text-secondary mb-2 uppercase tracking-widest">Depth</div>
       <div className="flex gap-3 flex-1">
         {/* Track */}
         <div className="relative w-6 flex-1 max-w-6 depth-track rounded-sm overflow-hidden border border-hairline">
           <motion.div
-            className="absolute bottom-0 left-0 right-0 bg-rust/30 border-t-2 border-rust"
+            className="absolute bottom-0 left-0 right-0 bg-primary/30 border-t-2 border-primary"
             animate={{ height: `${pct}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
           <motion.div
-            className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-rust rounded-full border-2 border-bg"
+            className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full border-2 border-bg"
             style={{ bottom: `calc(${100 - pct}% - 6px)` }}
             animate={{ bottom: `calc(${100 - pct}% - 6px)` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -33,7 +33,7 @@ function DepthGauge({ current, max }: { current: number; max: number }) {
         </div>
 
         {/* Labels */}
-        <div className="flex flex-col justify-between font-mono text-xs text-slate py-1">
+        <div className="flex flex-col justify-between font-mono text-xs text-secondary py-1">
           <span>0m</span>
           <span>{(max * 0.25).toFixed(0)}m</span>
           <span>{(max * 0.5).toFixed(0)}m</span>
@@ -41,8 +41,8 @@ function DepthGauge({ current, max }: { current: number; max: number }) {
           <span>{max}m</span>
         </div>
       </div>
-      <div className="mt-3 font-mono text-2xl text-rust font-medium tabular-nums">
-        {current.toFixed(0)}<span className="text-sm text-slate ml-1">m MD</span>
+      <div className="mt-3 font-mono text-2xl text-primary font-medium tabular-nums">
+        {current.toFixed(0)}<span className="text-sm text-secondary ml-1">m MD</span>
       </div>
     </div>
   )
@@ -64,13 +64,13 @@ function AlertCard({ alert }: { alert: RiskAlert }) {
         <span className={`font-mono text-xs px-2 py-0.5 badge-${alert.severity}`}>
           {alert.severity.toUpperCase()}
         </span>
-        <span className="font-mono text-xs text-slate">{alert.distance_km.toFixed(1)} km</span>
+        <span className="font-mono text-xs text-secondary">{alert.distance_km.toFixed(1)} km</span>
       </div>
-      <div className="font-grotesk text-sm text-parchment font-medium mb-1">
+      <div className="font-grotesk text-sm text-foreground font-medium mb-1">
         {EVENT_LABELS[alert.event_type] || alert.event_type}
       </div>
-      <div className="font-mono text-xs text-rust mb-1">@ {alert.matched_depth_m?.toFixed(0)}m MD</div>
-      <div className="font-mono text-xs text-slate leading-relaxed">{alert.message.slice(0, 120)}…</div>
+      <div className="font-mono text-xs text-primary mb-1">@ {alert.matched_depth_m?.toFixed(0)}m MD</div>
+      <div className="font-mono text-xs text-secondary leading-relaxed">{alert.message.slice(0, 120)}…</div>
     </motion.div>
   )
 }
@@ -160,18 +160,18 @@ export default function Dashboard() {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-hairline shrink-0">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="text-slate hover:text-parchment transition-colors">
+          <button onClick={() => navigate('/')} className="text-secondary hover:text-foreground transition-colors">
             <ChevronLeft size={18} />
           </button>
-          <Layers size={16} className="text-rust" />
-          <span className="font-grotesk text-sm font-medium text-parchment">NWIS</span>
+          <Layers size={16} className="text-primary" />
+          <span className="font-grotesk text-sm font-medium text-foreground">NWIS</span>
           <span className="text-hairline">|</span>
-          <span className="font-mono text-xs text-slate">Operations Dashboard</span>
+          <span className="font-mono text-xs text-secondary">Operations Dashboard</span>
         </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/knowledge')}
-            className="flex items-center gap-2 font-mono text-xs text-slate hover:text-parchment transition-colors"
+            className="flex items-center gap-2 font-mono text-xs text-secondary hover:text-foreground transition-colors"
           >
             <BookOpen size={14} />
             Knowledge Repo
@@ -199,7 +199,7 @@ export default function Dashboard() {
             className="flex-1"
           >
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution=""
             />
 
@@ -264,7 +264,7 @@ export default function Dashboard() {
               {/* Play/Pause */}
               <button
                 onClick={() => setPlaying((p) => !p)}
-                className="w-8 h-8 border border-rust flex items-center justify-center text-rust hover:bg-rust hover:text-bg transition-all"
+                className="w-8 h-8 border border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-bg transition-all"
               >
                 {playing ? <Pause size={14} /> : <Play size={14} />}
               </button>
@@ -275,7 +275,7 @@ export default function Dashboard() {
                   <button
                     key={s}
                     onClick={() => setSpeed(s)}
-                    className={`font-mono text-xs px-2 py-1 border transition-all ${speed === s ? 'border-rust bg-rust text-bg' : 'border-hairline text-slate hover:border-parchment/40'}`}
+                    className={`font-mono text-xs px-2 py-1 border transition-all ${speed === s ? 'border-primary bg-primary text-bg' : 'border-hairline text-secondary hover:border-foreground/40'}`}
                   >
                     {s}x
                   </button>
@@ -290,17 +290,17 @@ export default function Dashboard() {
                   max={Math.max(0, progress.length - 1)}
                   value={currentIdx}
                   onChange={(e) => { setCurrentIdx(Number(e.target.value)); setPlaying(false) }}
-                  className="w-full accent-rust cursor-pointer"
+                  className="w-full accent-primary cursor-pointer"
                 />
-                <div className="flex justify-between font-mono text-xs text-slate">
+                <div className="flex justify-between font-mono text-xs text-secondary">
                   <span>0m</span>
-                  <span className="text-rust font-medium">{currentDepth.toFixed(0)}m MD</span>
+                  <span className="text-primary font-medium">{currentDepth.toFixed(0)}m MD</span>
                   <span>{maxDepth}m TD</span>
                 </div>
               </div>
 
               {/* Timestamp */}
-              <div className="font-mono text-xs text-slate text-right w-40 shrink-0">
+              <div className="font-mono text-xs text-secondary text-right w-40 shrink-0">
                 {progress[currentIdx]?.timestamp
                   ? new Date(progress[currentIdx].timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                   : '--'}
@@ -313,18 +313,18 @@ export default function Dashboard() {
         <div className="w-80 border-l border-hairline flex flex-col" style={{ background: '#1e150d' }}>
           <div className="px-4 py-3 border-b border-hairline flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertTriangle size={14} className="text-rust" />
-              <span className="font-grotesk text-sm font-medium text-parchment">Risk Alerts</span>
+              <AlertTriangle size={14} className="text-primary" />
+              <span className="font-grotesk text-sm font-medium text-foreground">Risk Alerts</span>
             </div>
-            <span className="font-mono text-xs text-slate">{visibleAlerts.length} active</span>
+            <span className="font-mono text-xs text-secondary">{visibleAlerts.length} active</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3">
             {visibleAlerts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="text-success mb-2"><Activity size={24} /></div>
-                <div className="font-mono text-xs text-slate">No risks at current depth.</div>
-                <div className="font-mono text-xs text-slate mt-1">Advance the scrubber to drill deeper.</div>
+                <div className="font-mono text-xs text-secondary">No risks at current depth.</div>
+                <div className="font-mono text-xs text-secondary mt-1">Advance the scrubber to drill deeper.</div>
               </div>
             ) : (
               <AnimatePresence mode="popLayout">
@@ -344,8 +344,8 @@ export default function Dashboard() {
               { label: 'Active Well', value: activeWell?.name.split(' ').pop() ?? '--' },
             ].map((s) => (
               <div key={s.label} className="border border-hairline p-2">
-                <div className="font-mono text-lg text-rust tabular-nums">{s.value}</div>
-                <div className="font-mono text-xs text-slate mt-0.5">{s.label}</div>
+                <div className="font-mono text-lg text-primary tabular-nums">{s.value}</div>
+                <div className="font-mono text-xs text-secondary mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
@@ -354,3 +354,4 @@ export default function Dashboard() {
     </div>
   )
 }
+

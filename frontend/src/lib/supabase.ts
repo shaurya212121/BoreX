@@ -47,10 +47,10 @@ export interface RiskAlert {
 }
 
 export const SEVERITY_COLORS: Record<string, string> = {
-  critical: '#D64545',
-  high: '#C1622B',
-  medium: '#5C7A89',
-  low: '#6B8F71',
+  critical: '#FF2A5F', // Outrun Red/Pink
+  high: '#FF9E00', // Warning Orange
+  medium: '#8B7EC8', // Soft Purple
+  low: '#00FF9D', // Neon Sonar Green
 }
 
 export const EVENT_LABELS: Record<string, string> = {
