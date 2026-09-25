@@ -1,15 +1,24 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
-import Dashboard from './pages/Dashboard'
+import DashboardLayout from './components/DashboardLayout'
+import TacticalMap from './pages/TacticalMap'
 import KnowledgeRepo from './pages/KnowledgeRepo'
+import Telemetry from './pages/Telemetry'
+import Reports from './pages/Reports'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/knowledge" element={<KnowledgeRepo />} />
+        
+        {/* Unified App Shell */}
+        <Route path="/app" element={<DashboardLayout />}>
+          <Route path="map" element={<TacticalMap />} />
+          <Route path="telemetry" element={<Telemetry />} />
+          <Route path="knowledge" element={<KnowledgeRepo />} />
+          <Route path="reports" element={<Reports />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )

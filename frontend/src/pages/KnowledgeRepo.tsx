@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+
 import { motion } from 'framer-motion'
-import { ChevronLeft, Search, Filter, FileText, Layers } from 'lucide-react'
+import { Search, Filter, FileText, Layers } from 'lucide-react'
 import { supabase, SEVERITY_COLORS, EVENT_LABELS } from '../lib/supabase'
 import type { DrillingReport, Well } from '../lib/supabase'
 
 const EVENT_TYPES = ['all', 'stuck_pipe', 'mud_loss', 'kick', 'overpressure', 'normal']
 
 export default function KnowledgeRepo() {
-  const navigate = useNavigate()
+  
   const [reports, setReports] = useState<DrillingReport[]>([])
   const [wells, setWells] = useState<Record<string, Well>>({})
   const [search, setSearch] = useState('')
@@ -46,24 +46,12 @@ export default function KnowledgeRepo() {
   })
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#1A120B' }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-hairline shrink-0">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/dashboard')} className="text-secondary hover:text-foreground transition-colors">
-            <ChevronLeft size={18} />
-          </button>
-          <Layers size={16} className="text-primary" />
-          <span className="font-grotesk text-sm font-medium text-foreground">NWIS</span>
-          <span className="text-hairline">|</span>
-          <span className="font-mono text-xs text-secondary">Drilling Knowledge Repository</span>
-        </div>
-        <span className="font-mono text-xs text-secondary">{filtered.length} records</span>
-      </header>
+    <div className="flex flex-col h-full bg-bg">
+
 
       <div className="flex flex-1 overflow-hidden">
         {/* Filters sidebar */}
-        <div className="w-64 border-r border-hairline p-4 flex flex-col gap-4 shrink-0" style={{ background: '#1e150d' }}>
+        <div className="w-64 border-r border-hairline p-4 flex flex-col gap-4 shrink-0 bg-panel">
           <div>
             <div className="font-mono text-xs text-secondary uppercase tracking-widest mb-2 flex items-center gap-1">
               <Search size={11} /> Search
@@ -187,4 +175,5 @@ export default function KnowledgeRepo() {
     </div>
   )
 }
+
 

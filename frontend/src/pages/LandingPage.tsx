@@ -4,7 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Edges } from '@react-three/drei'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
-import { ChevronDown, Layers, AlertTriangle, Map, Target, Database, FileText } from 'lucide-react'
+import { Layers } from 'lucide-react'
 
 // ─── Seismic Strata Scene ────────────────────────────────────────────────
 const STRATA_LAYERS = [
@@ -83,33 +83,11 @@ export default function LandingPage() {
         className="absolute inset-0 z-0 opacity-40 mix-blend-screen"
         style={{ backgroundImage: 'url(/bg_seismic.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
-      
-      {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-5 border-b border-hairline bg-bg/70 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <Layers size={20} className="text-primary" />
-          <span className="font-grotesk font-600 text-foreground tracking-wider text-sm uppercase">NWIS</span>
-          <span className="text-hairline mx-2">|</span>
-          <span className="font-mono text-xs text-secondary">Nearby Wells Intelligence System</span>
-        </div>
-        <nav className="flex items-center gap-6">
-          <button onClick={() => navigate('/knowledge')} className="font-mono text-xs text-secondary hover:text-foreground transition-colors">
-            Knowledge Repo
-          </button>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="font-mono text-xs px-4 py-2 border border-primary text-primary hover:bg-primary/10 transition-all"
-          >
-            OPEN DASHBOARD →
-          </button>
-        </nav>
-      </header>
 
       {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
         <Canvas camera={{ position: [5, 4, 8], fov: 45 }} shadows>
           <ambientLight intensity={0.4} color="#8B7EC8" />
-          {/* Main directional light to cast strong shadows and show 3D depth */}
           <directionalLight position={[5, 8, 5]} intensity={1.5} color="#EAE6EF" castShadow shadow-mapSize={[1024, 1024]} />
           <directionalLight position={[-5, 3, -5]} intensity={0.5} color="#00FF9D" />
 
@@ -131,86 +109,37 @@ export default function LandingPage() {
         </Canvas>
 
         {/* Dark overlay gradient so text is legible */}
-        <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/70 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent pointer-events-none" />
       </div>
 
-      {/* Hero Text */}
-      <div className="relative z-10 flex flex-col justify-center min-h-screen px-16 max-w-3xl pb-24">
+      {/* Hero Text - Centered & Cinematic */}
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: 'easeOut' }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
+          className="flex flex-col items-center"
         >
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-px bg-primary" />
-            <span className="font-mono text-xs text-primary tracking-widest uppercase">Oil India Limited · SIH26121</span>
+          <div className="flex items-center gap-2 mb-4">
+            <Layers size={24} className="text-primary" />
+            <span className="font-grotesk text-xl font-bold tracking-[0.2em] text-foreground">NWIS</span>
           </div>
-
-          <h1 className="font-grotesk text-5xl font-semibold leading-tight text-foreground mb-6">
-            See What's Beneath —<br />
-            <span className="text-primary">Before You Drill There.</span>
+          
+          <h1 className="font-mono text-sm tracking-widest text-primary uppercase mb-12">
+            Nearby Wells Intelligence System
           </h1>
 
-          <p className="font-grotesk text-lg text-foreground/90 leading-relaxed mb-10 max-w-xl">
-            NWIS correlates historical drilling data from offset wells with your
-            active well's real-time depth, surfacing mud loss, stuck pipe, and
-            overpressure risks before you encounter them.
-          </p>
-
-          <div className="flex items-center gap-4">
-            <motion.button
-              onClick={() => navigate('/dashboard')}
-              whileHover={{ x: 4 }}
-              transition={{ duration: 0.15 }}
-              className="font-mono text-sm px-8 py-4 bg-primary text-bg font-bold tracking-wide hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(0,255,157,0.3)]"
-            >
-              OPEN INTELLIGENCE DASHBOARD →
-            </motion.button>
-            <button
-              onClick={() => navigate('/knowledge')}
-              className="font-mono text-sm px-8 py-4 border border-hairline text-foreground/80 hover:border-foreground/50 hover:text-foreground transition-all"
-            >
-              Knowledge Repository
-            </button>
-          </div>
+          <motion.button
+            onClick={() => navigate('/app/map')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="font-mono text-sm px-12 py-5 bg-primary/10 border-2 border-primary text-primary font-bold tracking-widest hover:bg-primary hover:text-bg transition-all shadow-[0_0_30px_rgba(0,255,157,0.2)] hover:shadow-[0_0_50px_rgba(0,255,157,0.5)] pointer-events-auto"
+          >
+            INITIALIZE SYSTEM
+          </motion.button>
         </motion.div>
       </div>
-
-      {/* Feature Strip - 6 Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.5 }}
-        className="absolute bottom-0 left-0 right-0 z-10 border-t border-hairline bg-panel/90 backdrop-blur-md"
-      >
-        <div className="grid grid-cols-3 grid-rows-2 divide-x divide-y divide-hairline">
-          {[
-            { icon: <Map size={16} />, title: 'Geospatial Well Map', desc: 'Nearby wells plotted within your defined radius' },
-            { icon: <AlertTriangle size={16} />, title: 'Real-Time Risk Alerts', desc: 'Alerts triggered as depth approaches danger zones' },
-            { icon: <Layers size={16} />, title: 'Formation Correlation', desc: 'Historical events matched by depth band across wells' },
-            { icon: <Target size={16} />, title: 'Explainable Risk Scoring', desc: 'Every alert shows exactly why based on proximity & depth' },
-            { icon: <Database size={16} />, title: 'Built on Real Field Data', desc: 'Powered by the Volve field dataset, not placeholders' },
-            { icon: <FileText size={16} />, title: 'One-Click Risk Report', desc: 'Export a formatted drilling risk dossier instantly' },
-          ].map((f) => (
-            <div key={f.title} className="px-8 py-5 flex items-start gap-4">
-              <div className="text-primary mt-0.5 shrink-0">{f.icon}</div>
-              <div>
-                <div className="font-grotesk text-sm font-medium text-foreground mb-1">{f.title}</div>
-                <div className="font-mono text-xs text-secondary">{f.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Scroll hint */}
-      <motion.div
-        animate={{ y: [0, 6, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="absolute bottom-40 left-1/2 -translate-x-1/2 z-10 text-primary/30"
-      >
-        <ChevronDown size={20} />
-      </motion.div>
     </div>
   )
 }
+

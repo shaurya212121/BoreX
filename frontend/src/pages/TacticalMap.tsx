@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, CircleMarker, Popup, Circle } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, ChevronLeft, AlertTriangle, Layers, BookOpen, Activity } from 'lucide-react'
+import { Play, Pause, AlertTriangle, Layers, BookOpen, Activity } from 'lucide-react'
 import { supabase, SEVERITY_COLORS, EVENT_LABELS } from '../lib/supabase'
 import type { Well, ActiveWellProgress, RiskAlert } from '../lib/supabase'
 
@@ -76,7 +76,7 @@ function AlertCard({ alert }: { alert: RiskAlert }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-export default function Dashboard() {
+export default function TacticalMap() {
   const navigate = useNavigate()
   const [wells, setWells] = useState<Well[]>([])
   const [activeWell, setActiveWell] = useState<Well | null>(null)
@@ -156,37 +156,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#1A120B' }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-hairline shrink-0">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="text-secondary hover:text-foreground transition-colors">
-            <ChevronLeft size={18} />
-          </button>
-          <Layers size={16} className="text-primary" />
-          <span className="font-grotesk text-sm font-medium text-foreground">NWIS</span>
-          <span className="text-hairline">|</span>
-          <span className="font-mono text-xs text-secondary">Operations Dashboard</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/knowledge')}
-            className="flex items-center gap-2 font-mono text-xs text-secondary hover:text-foreground transition-colors"
-          >
-            <BookOpen size={14} />
-            Knowledge Repo
-          </button>
-          <div className="flex items-center gap-2">
-            <Activity size={14} className="text-success" />
-            <span className="font-mono text-xs text-success">LIVE</span>
-          </div>
-        </div>
-      </header>
-
+    <div className="flex flex-col h-full bg-bg">
       {/* Main Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left — Depth Gauge */}
-        <div className="w-24 border-r border-hairline p-4 flex flex-col" style={{ background: '#1e150d' }}>
+        <div className="w-24 border-r border-hairline p-4 flex flex-col bg-panel">
           <DepthGauge current={currentDepth} max={maxDepth} />
         </div>
 
@@ -208,7 +182,7 @@ export default function Dashboard() {
               <Circle
                 center={[activeWell.lat, activeWell.lon]}
                 radius={80000}
-                pathOptions={{ color: '#C1622B', weight: 1, fillOpacity: 0.05, dashArray: '4 6' }}
+                pathOptions={{ color: '#00FF9D', weight: 1, fillOpacity: 0.05, dashArray: '4 6' }}
               />
             )}
 
@@ -221,7 +195,7 @@ export default function Dashboard() {
                 pathOptions={{ color: wellMarkerColor(w), fillColor: wellMarkerColor(w), fillOpacity: 0.8, weight: 1.5 }}
               >
                 <Popup className="nwis-popup">
-                  <div style={{ background: '#241A10', color: '#EDE0D0', padding: 12, fontFamily: 'Space Grotesk', minWidth: 200 }}>
+                  <div style={{ background: '#130C1E', color: '#F4F0FB', padding: 12, fontFamily: 'Space Grotesk', minWidth: 200 }}>
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>{w.name}</div>
                     <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#5C7A89' }}>
                       TD: {w.total_depth_m}m · {w.field_name}
@@ -230,7 +204,7 @@ export default function Dashboard() {
                       {w.lat.toFixed(4)}°N {w.lon.toFixed(4)}°E
                     </div>
                     {riskyWellIds.has(w.id) && (
-                      <div style={{ marginTop: 8, color: '#C1622B', fontSize: 11, fontFamily: 'IBM Plex Mono' }}>
+                      <div style={{ marginTop: 8, color: '#00FF9D', fontSize: 11, fontFamily: 'IBM Plex Mono' }}>
                         ⚠ {visibleAlerts.filter(a => a.nearby_well_id === w.id).length} risk event(s) at current depth
                       </div>
                     )}
@@ -244,12 +218,12 @@ export default function Dashboard() {
               <CircleMarker
                 center={[activeWell.lat, activeWell.lon]}
                 radius={12}
-                pathOptions={{ color: '#EDE0D0', fillColor: '#C1622B', fillOpacity: 1, weight: 2 }}
+                pathOptions={{ color: '#F4F0FB', fillColor: '#00FF9D', fillOpacity: 1, weight: 2 }}
               >
                 <Popup>
-                  <div style={{ background: '#241A10', color: '#EDE0D0', padding: 12, fontFamily: 'Space Grotesk' }}>
+                  <div style={{ background: '#130C1E', color: '#F4F0FB', padding: 12, fontFamily: 'Space Grotesk' }}>
                     <div style={{ fontWeight: 700 }}>⬤ ACTIVE WELL</div>
-                    <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#C1622B', marginTop: 4 }}>
+                    <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#00FF9D', marginTop: 4 }}>
                       Current Depth: {currentDepth.toFixed(0)}m MD
                     </div>
                   </div>
@@ -259,7 +233,7 @@ export default function Dashboard() {
           </MapContainer>
 
           {/* ── Depth Timeline Scrubber ── */}
-          <div className="border-t border-hairline px-6 py-4 shrink-0" style={{ background: '#1e150d' }}>
+          <div className="border-t border-hairline px-6 py-4 shrink-0 bg-panel">
             <div className="flex items-center gap-4">
               {/* Play/Pause */}
               <button
@@ -310,7 +284,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right — Alert Panel */}
-        <div className="w-80 border-l border-hairline flex flex-col" style={{ background: '#1e150d' }}>
+        <div className="w-80 border-l border-hairline flex flex-col bg-panel">
           <div className="px-4 py-3 border-b border-hairline flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle size={14} className="text-primary" />
@@ -354,4 +328,6 @@ export default function Dashboard() {
     </div>
   )
 }
+
+
 
