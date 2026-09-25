@@ -7,4 +7,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['leaflet'],
   },
+  server: {
+    watch: {
+      ignored: ['**/*.zip', '**/public.zip'],
+    },
+  },
 })

@@ -38,22 +38,25 @@ def simulate_drilling_progress(
     depth = 0.0
     t = spud_date
 
-    # Section boundaries (m)
-    SURFACE_END     = 500.0
-    INTERMEDIATE_END = 2000.0
-    RESERVOIR_START  = 2000.0
+    # Assam Basin Section boundaries (m)
+    DHEKIAJULI_END  = 650.0
+    GIRUJAN_END     = 1550.0
+    TIPAM_END       = 2850.0
+    BARAIL_START    = 2850.0
 
     def rop_for_depth(d: float) -> float:
-        """Return ROP (m/hr) with noise depending on section."""
-        if d < SURFACE_END:
-            base = rng.uniform(28, 40)
-        elif d < INTERMEDIATE_END:
-            base = rng.uniform(12, 22)
+        """Return ROP (m/hr) based on Assam basin geological intervals."""
+        if d < DHEKIAJULI_END:
+            base = rng.uniform(28, 38)
+        elif d < GIRUJAN_END:
+            base = rng.uniform(16, 24)
+        elif d < TIPAM_END:
+            base = rng.uniform(11, 19)
         else:
-            base = rng.uniform(5, 14)
-        # Occasional hard formation — ROP drops sharply
-        if rng.random() < 0.05:
-            base *= 0.3
+            base = rng.uniform(4, 11)
+        # Hard formation or tight stringer — ROP drops sharply
+        if rng.random() < 0.06:
+            base *= 0.35
         return round(base, 2)
 
     # Record surface start

@@ -120,23 +120,35 @@ export default function LandingPage() {
           transition={{ duration: 1.2, ease: 'easeOut' }}
           className="flex flex-col items-center"
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <Layers size={24} className="text-primary" />
-            <span className="font-grotesk text-xl font-bold tracking-[0.2em] text-foreground">NWIS</span>
+            <span className="font-grotesk text-2xl font-bold tracking-[0.25em] text-foreground">NWIS</span>
           </div>
           
-          <h1 className="font-mono text-sm tracking-widest text-primary uppercase mb-12">
+          <h1 className="font-mono text-sm tracking-widest text-primary uppercase mb-2">
             Nearby Wells Intelligence System
           </h1>
+
+          <p className="font-mono text-xs text-secondary/90 tracking-wide uppercase mb-3 text-center max-w-md">
+            AI-Powered Offset Well Knowledge & Decision Support Platform
+          </p>
+
+          <span className="font-mono text-[10px] px-3 py-1 bg-primary/10 border border-primary/30 text-primary tracking-widest uppercase mb-10 rounded-xs">
+            UPPER ASSAM BASIN DEMONSTRATION BENCHMARK
+          </span>
 
           <motion.button
             onClick={() => navigate('/app/map')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="font-mono text-sm px-12 py-5 bg-primary/10 border-2 border-primary text-primary font-bold tracking-widest hover:bg-primary hover:text-bg transition-all shadow-[0_0_30px_rgba(0,255,157,0.2)] hover:shadow-[0_0_50px_rgba(0,255,157,0.5)] pointer-events-auto"
+            className="font-mono text-sm px-12 py-4 bg-primary/10 border-2 border-primary text-primary font-bold tracking-widest hover:bg-primary hover:text-bg transition-all shadow-[0_0_30px_rgba(0,255,157,0.2)] hover:shadow-[0_0_50px_rgba(0,255,157,0.5)] pointer-events-auto rounded-xs"
           >
-            INITIALIZE SYSTEM
+            INITIALIZE COMMAND CENTER
           </motion.button>
+
+          <div className="mt-8 font-mono text-[10px] text-secondary/60 tracking-wider uppercase">
+            SYNTHETIC DEMONSTRATION DATA · SIH 2026
+          </div>
         </motion.div>
       </div>
     </div>

@@ -18,11 +18,13 @@ SEVERITY_SCORE = {
 }
 
 EVENT_LABELS = {
-    "stuck_pipe":   "Stuck Pipe Incident",
-    "mud_loss":     "Mud / Circulation Loss",
-    "kick":         "Well Control / Kick",
-    "overpressure": "Overpressure Zone",
-    "normal":       "Routine Drilling",
+    "kick":             "Well Control / Kick",
+    "stuck_pipe":       "Stuck Pipe Incident",
+    "overpressure":     "Overpressure Zone",
+    "mud_loss":         "Mud / Circulation Loss",
+    "cementing":        "Cementing / Casing Integrity",
+    "drilling_problem": "Hole Instability / Vibration",
+    "normal":           "Routine Drilling",
 }
 
 

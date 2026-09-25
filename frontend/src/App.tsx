@@ -5,6 +5,7 @@ import TacticalMap from './pages/TacticalMap'
 import KnowledgeRepo from './pages/KnowledgeRepo'
 import Telemetry from './pages/Telemetry'
 import Reports from './pages/Reports'
+import TrajectoryComparison from './pages/TrajectoryComparison'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="telemetry" element={<Telemetry />} />
           <Route path="knowledge" element={<KnowledgeRepo />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="trajectory" element={<TrajectoryComparison />} />
         </Route>
       </Routes>
     </BrowserRouter>

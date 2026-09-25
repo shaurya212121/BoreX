@@ -1,121 +1,150 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, CircleMarker, Popup, Circle } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, Circle, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, AlertTriangle, Layers, BookOpen, Activity } from 'lucide-react'
-import { supabase, SEVERITY_COLORS, EVENT_LABELS } from '../lib/supabase'
+import {
+  Play,
+  Pause,
+  AlertTriangle,
+  Loader2,
+  ShieldAlert,
+  X,
+  Target,
+  RotateCcw,
+  CheckCircle2,
+  Key,
+} from 'lucide-react'
 import type { Well, ActiveWellProgress, RiskAlert } from '../lib/supabase'
+import { getWells, getActiveWellProgress, getRiskAlerts } from '../lib/dataService'
+import { getFormationAtDepth } from '../lib/assamBenchmarkData'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-const ACTIVE_WELL_ID_KEY = 'ACTIVE: Volve-A01'
-
-// ─── Depth Gauge ─────────────────────────────────────────────────────────────
-function DepthGauge({ current, max }: { current: number; max: number }) {
-  const pct = Math.min(100, (current / max) * 100)
-  return (
-    <div className="flex flex-col h-full">
-      <div className="font-mono text-xs text-secondary mb-2 uppercase tracking-widest">Depth</div>
-      <div className="flex gap-3 flex-1">
-        {/* Track */}
-        <div className="relative w-6 flex-1 max-w-6 depth-track rounded-sm overflow-hidden border border-hairline">
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 bg-primary/30 border-t-2 border-primary"
-            animate={{ height: `${pct}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          />
-          <motion.div
-            className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full border-2 border-bg"
-            style={{ bottom: `calc(${100 - pct}% - 6px)` }}
-            animate={{ bottom: `calc(${100 - pct}% - 6px)` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          />
-        </div>
-
-        {/* Labels */}
-        <div className="flex flex-col justify-between font-mono text-xs text-secondary py-1">
-          <span>0m</span>
-          <span>{(max * 0.25).toFixed(0)}m</span>
-          <span>{(max * 0.5).toFixed(0)}m</span>
-          <span>{(max * 0.75).toFixed(0)}m</span>
-          <span>{max}m</span>
-        </div>
-      </div>
-      <div className="mt-3 font-mono text-2xl text-primary font-medium tabular-nums">
-        {current.toFixed(0)}<span className="text-sm text-secondary ml-1">m MD</span>
-      </div>
-    </div>
-  )
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371.0
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
 }
 
-// ─── Alert Card ───────────────────────────────────────────────────────────────
-function AlertCard({ alert }: { alert: RiskAlert }) {
-  const color = SEVERITY_COLORS[alert.severity] || '#5C7A89'
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="border border-hairline p-3 mb-2"
-      style={{ borderLeftColor: color, borderLeftWidth: 3 }}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <span className={`font-mono text-xs px-2 py-0.5 badge-${alert.severity}`}>
-          {alert.severity.toUpperCase()}
-        </span>
-        <span className="font-mono text-xs text-secondary">{alert.distance_km.toFixed(1)} km</span>
-      </div>
-      <div className="font-grotesk text-sm text-foreground font-medium mb-1">
-        {EVENT_LABELS[alert.event_type] || alert.event_type}
-      </div>
-      <div className="font-mono text-xs text-primary mb-1">@ {alert.matched_depth_m?.toFixed(0)}m MD</div>
-      <div className="font-mono text-xs text-secondary leading-relaxed">{alert.message.slice(0, 120)}…</div>
-    </motion.div>
-  )
+const ACTIVE_WELL_KEY = 'ACTIVE: IND-NWIS-01'
+
+const mapApiKey: string = import.meta.env.VITE_MAP_API_KEY || import.meta.env.VITE_MAPS_API_KEY || 'cb1_3ygq_1_566c1fe0e6827f317aeb61d2'
+const cartoKeyParam = mapApiKey ? `?key=${mapApiKey}` : ''
+
+// Basemap Providers with Authenticated CARTO & Satellite Basemaps
+const BASEMAP_PROVIDERS = {
+  DARK: {
+    name: 'Subsurface Dark Matter (CARTO)',
+    url: `https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png${cartoKeyParam}`,
+    subdomains: 'abcd',
+    attribution: '&copy; CARTO, OpenStreetMap',
+    label: 'Dark Subsurface',
+  },
+  VOYAGER: {
+    name: 'Geospatial Topo & Roads (CARTO)',
+    url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png${cartoKeyParam}`,
+    subdomains: 'abcd',
+    attribution: '&copy; CARTO, OpenStreetMap',
+    label: 'Geospatial Topo',
+  },
+  SATELLITE: {
+    name: 'Satellite Topo & Surface Relief',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    subdomains: '',
+    attribution: 'Esri, Maxar, Earthstar Geographics',
+    label: 'Satellite Topo',
+  },
+  LIGHT: {
+    name: 'Subsurface Light (Positron)',
+    url: `https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png${cartoKeyParam}`,
+    subdomains: 'abcd',
+    attribution: '&copy; CARTO, OpenStreetMap',
+    label: 'Subsurface Light',
+  },
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+type BasemapKey = keyof typeof BASEMAP_PROVIDERS
+
+// ── Leaflet Auto-Resize & Viewport Controller ──
+function MapController({ center }: { center: [number, number] }) {
+  const map = useMap()
+
+  useEffect(() => {
+    // Invalidate size immediately and after layout stabilization
+    map.invalidateSize()
+    const t1 = setTimeout(() => map.invalidateSize(), 150)
+    const t2 = setTimeout(() => map.invalidateSize(), 500)
+
+    const handleResize = () => map.invalidateSize()
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [map])
+
+  useEffect(() => {
+    map.setView(center, map.getZoom())
+  }, [center, map])
+
+  return null
+}
+
 export default function TacticalMap() {
-  const navigate = useNavigate()
   const [wells, setWells] = useState<Well[]>([])
   const [activeWell, setActiveWell] = useState<Well | null>(null)
+  const [selectedWell, setSelectedWell] = useState<Well | null>(null)
   const [allAlerts, setAllAlerts] = useState<RiskAlert[]>([])
   const [progress, setProgress] = useState<ActiveWellProgress[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
+  const [searchRadiusKm, setSearchRadiusKm] = useState(80)
+  const [activeBasemap, setActiveBasemap] = useState<BasemapKey>('DARK')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // ── Fetch data ──
+  // ── Load Data ──
   useEffect(() => {
     async function load() {
-      const { data: ws } = await supabase.from('wells').select('*')
-      if (ws) {
+      try {
+        setLoading(true)
+        setError(null)
+        const { data: ws, error: wsError } = await getWells()
+        if (wsError) throw new Error(wsError)
         setWells(ws)
-        const active = ws.find((w: Well) => w.name === ACTIVE_WELL_ID_KEY)
-        setActiveWell(active || null)
-        if (active) {
-          const { data: prog } = await supabase
-            .from('active_well_progress')
-            .select('*')
-            .eq('well_id', active.id)
-            .order('timestamp', { ascending: true })
-          if (prog) setProgress(prog)
 
-          const { data: alerts } = await supabase
-            .from('risk_alerts')
-            .select('*')
-            .eq('active_well_id', active.id)
-            .order('matched_depth_m', { ascending: true })
-          if (alerts) setAllAlerts(alerts)
+        const active = ws.find((w: Well) => w.name.includes('IND-NWIS-01') || w.name === ACTIVE_WELL_KEY) || ws[0]
+        setActiveWell(active || null)
+
+        if (active) {
+          const [progRes, alertsRes] = await Promise.all([
+            getActiveWellProgress(active.id),
+            getRiskAlerts(active.id),
+          ])
+
+          if (progRes.error) throw new Error(progRes.error)
+          if (alertsRes.error) throw new Error(alertsRes.error)
+
+          setProgress(progRes.data)
+          setAllAlerts(alertsRes.data)
         }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Database query error')
+      } finally {
+        setLoading(false)
       }
     }
     load()
   }, [])
 
-  // ── Playback ──
+  // ── Scrubber Playback ──
   const tick = useCallback(() => {
     setCurrentIdx((i) => {
       if (i >= progress.length - 1) { setPlaying(false); return i }
@@ -129,205 +158,433 @@ export default function TacticalMap() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [playing, speed, tick])
 
-  const currentDepth = progress[currentIdx]?.current_depth_m ?? 0
-  const maxDepth = activeWell?.total_depth_m ?? 3500
+  const currentDepth = progress[currentIdx]?.current_depth_m ?? 2480
+  const maxDepth = activeWell?.total_depth_m ?? 3650
+  const currentFormation = getFormationAtDepth(currentDepth)
 
-  // Alerts visible at or before current depth (+50m lookahead)
+  // Alerts visible at current depth with a lookahead window
   const visibleAlerts = allAlerts.filter(
-    (a) => a.matched_depth_m <= currentDepth + 50 && a.matched_depth_m >= 0
-  ).slice(-6)
+    (a) =>
+      a.matched_depth_m <= currentDepth + 60 &&
+      a.matched_depth_m >= currentDepth - 120 &&
+      a.distance_km <= searchRadiusKm
+  )
 
-  // Historical wells with risk history at or near current depth
-  const historicalWells = wells.filter((w) => w.name !== ACTIVE_WELL_ID_KEY)
+  const activeWellId = activeWell?.id
+  const offsetWellsInRadius = wells.filter((w) => {
+    if (w.id === activeWellId) return false
+    if (!activeWell) return true
+    return haversineKm(activeWell.lat, activeWell.lon, w.lat, w.lon) <= searchRadiusKm
+  })
+
   const riskyWellIds = new Set(visibleAlerts.map((a) => a.nearby_well_id))
+  const riskyWellsInRadiusCount = offsetWellsInRadius.filter((w) => riskyWellIds.has(w.id)).length
 
-  // Map center
-  const center: [number, number] = activeWell ? [activeWell.lat, activeWell.lon] : [58.44, 1.905]
+  function getWellMarkerStyle(well: Well) {
+    const isSelected = selectedWell?.id === well.id
+    const isRisky = riskyWellIds.has(well.id)
 
-  // Severity to color for map markers
-  function wellMarkerColor(well: Well): string {
-    if (riskyWellIds.has(well.id)) {
-      const alerts = visibleAlerts.filter((a) => a.nearby_well_id === well.id)
-      const maxSev = alerts.reduce((a, b) =>
-        (SEVERITY_COLORS[a.severity] ? a : b), alerts[0])
-      return SEVERITY_COLORS[maxSev?.severity] || '#5C7A89'
+    if (isSelected) {
+      return { color: '#38BDF8', fillColor: '#38BDF8', radius: 10, weight: 3, fillOpacity: 0.9 }
     }
-    return '#6B8F71'
+    if (isRisky) {
+      const alert = visibleAlerts.find((a) => a.nearby_well_id === well.id)
+      const color = alert?.severity === 'CRITICAL' ? '#F43F5E' : '#F59E0B'
+      return { color: color, fillColor: color, radius: 8, weight: 2, fillOpacity: 0.85 }
+    }
+    return { color: '#0EA5E9', fillColor: '#0EA5E9', radius: 6, weight: 1.5, fillOpacity: 0.75 }
   }
 
+  const center: [number, number] = activeWell ? [activeWell.lat, activeWell.lon] : [27.3250, 95.3180]
+  const currentProvider = BASEMAP_PROVIDERS[activeBasemap]
+
+  // Well selected details
+  const selectedWellAlerts = selectedWell ? allAlerts.filter((a) => a.nearby_well_id === selectedWell.id) : []
+  const selectedWellDist = selectedWell && activeWell ? haversineKm(activeWell.lat, activeWell.lon, selectedWell.lat, selectedWell.lon) : null
+
   return (
-    <div className="flex flex-col h-full bg-bg">
-      {/* Main Body */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left — Depth Gauge */}
-        <div className="w-24 border-r border-hairline p-4 flex flex-col bg-panel">
-          <DepthGauge current={currentDepth} max={maxDepth} />
+    <div className="flex flex-col h-full w-full bg-bg text-foreground select-none relative overflow-hidden">
+      {/* ── Top Floating Tactical HUD ── */}
+      <div className="absolute top-5 left-5 right-5 sm:top-6 sm:left-6 sm:right-6 z-[1000] flex flex-wrap items-center justify-between gap-3.5 pointer-events-none">
+        {/* Left Stats Pill */}
+        <div className="pointer-events-auto flex items-center gap-3.5 bg-panel/90 backdrop-blur-md border border-hairline px-4.5 py-3 rounded-2xl shadow-xl">
+          <div className="flex items-center gap-2.5 pr-3.5 border-r border-hairline">
+            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[10px] text-secondary font-medium uppercase tracking-wider">Active Horizon</span>
+              <span className="font-mono text-sm font-bold text-foreground">
+                {currentDepth.toFixed(0)}m <span className="text-xs text-secondary font-normal font-sans">({currentFormation.name})</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 text-xs">
+            <div className="flex items-center gap-1.5 text-secondary">
+              <Target size={14} className="text-primary-glow" />
+              <span><strong className="text-foreground">{offsetWellsInRadius.length}</strong> offsets in {searchRadiusKm}km</span>
+            </div>
+            <div className="h-4 w-[1px] bg-hairline" />
+            <div className="flex items-center gap-1.5">
+              <ShieldAlert size={14} className={riskyWellsInRadiusCount > 0 ? 'text-danger' : 'text-accent'} />
+              <span className={riskyWellsInRadiusCount > 0 ? 'text-danger font-semibold' : 'text-accent font-medium'}>
+                {riskyWellsInRadiusCount > 0 ? `${riskyWellsInRadiusCount} hazard correlation(s)` : 'No active proximity hazards'}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Center — Map */}
-        <div className="flex-1 flex flex-col">
+        {/* Right Controls: Key Status, Radius & Basemap Selector */}
+        <div className="pointer-events-auto flex items-center gap-2.5">
+          {mapApiKey && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-panel/90 backdrop-blur-md border border-hairline text-accent text-xs font-mono shadow-xl">
+              <Key size={13} className="text-accent" />
+              <span>Map Key: Configured</span>
+            </div>
+          )}
+
+          {/* Radius Selector */}
+          <div className="flex items-center gap-1 bg-panel/90 backdrop-blur-md border border-hairline p-1 rounded-xl shadow-xl">
+            <span className="text-[10px] text-secondary font-medium px-2">Radius:</span>
+            {[25, 50, 80, 120].map((r) => (
+              <button
+                key={r}
+                onClick={() => setSearchRadiusKm(r)}
+                className={`text-xs px-2.5 py-1 rounded-lg transition-all font-mono ${
+                  searchRadiusKm === r
+                    ? 'bg-primary text-white font-semibold shadow-sm'
+                    : 'text-secondary hover:text-foreground hover:bg-panel-card'
+                }`}
+              >
+                {r}km
+              </button>
+            ))}
+          </div>
+
+          {/* Basemap Toggle */}
+          <div className="flex items-center gap-1 bg-panel/90 backdrop-blur-md border border-hairline p-1 rounded-xl shadow-xl">
+            {(Object.keys(BASEMAP_PROVIDERS) as BasemapKey[]).map((key) => (
+              <button
+                key={key}
+                onClick={() => setActiveBasemap(key)}
+                className={`text-xs px-2.5 py-1 rounded-lg transition-all ${
+                  activeBasemap === key
+                    ? 'bg-panel-card text-primary-glow font-semibold border border-hairline-light'
+                    : 'text-secondary hover:text-foreground'
+                }`}
+              >
+                {BASEMAP_PROVIDERS[key].label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Map Canvas ── */}
+      <div className="flex-1 w-full h-full relative">
+        {loading ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-bg gap-3">
+            <Loader2 size={32} className="animate-spin text-primary-glow" />
+            <p className="text-xs text-secondary font-mono">Loading Assam Basin Offset Geometry...</p>
+          </div>
+        ) : error ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-bg gap-2 text-danger p-6 text-center">
+            <AlertTriangle size={36} />
+            <div className="font-semibold text-sm">Map Initialization Error</div>
+            <div className="text-xs text-secondary max-w-sm">{error}</div>
+          </div>
+        ) : (
           <MapContainer
             center={center}
             zoom={10}
-            style={{ flex: 1, width: '100%' }}
-            className="flex-1"
+            scrollWheelZoom={true}
+            style={{ width: '100%', height: '100%' }}
+            className="w-full h-full"
           >
+            <MapController center={center} />
+
             <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution=""
+              key={`${activeBasemap}-${currentProvider.url}`}
+              url={currentProvider.url}
+              subdomains={currentProvider.subdomains}
+              attribution={currentProvider.attribution}
             />
 
-            {/* Search radius */}
+            {/* Proximity Perimeter Circle */}
             {activeWell && (
-              <Circle
-                center={[activeWell.lat, activeWell.lon]}
-                radius={80000}
-                pathOptions={{ color: '#00FF9D', weight: 1, fillOpacity: 0.05, dashArray: '4 6' }}
-              />
+              <>
+                <Circle
+                  center={[activeWell.lat, activeWell.lon]}
+                  radius={searchRadiusKm * 1000}
+                  pathOptions={{
+                    color: '#38BDF8',
+                    weight: 1.5,
+                    fillOpacity: 0.03,
+                    dashArray: '6 8',
+                  }}
+                />
+                <Circle
+                  center={[activeWell.lat, activeWell.lon]}
+                  radius={25000}
+                  pathOptions={{
+                    color: '#0284C7',
+                    weight: 1,
+                    fillOpacity: 0.02,
+                    dashArray: '3 6',
+                  }}
+                />
+              </>
             )}
 
-            {/* Historical wells */}
-            {historicalWells.map((w) => (
-              <CircleMarker
-                key={w.id}
-                center={[w.lat, w.lon]}
-                radius={riskyWellIds.has(w.id) ? 9 : 6}
-                pathOptions={{ color: wellMarkerColor(w), fillColor: wellMarkerColor(w), fillOpacity: 0.8, weight: 1.5 }}
-              >
-                <Popup className="nwis-popup">
-                  <div style={{ background: '#130C1E', color: '#F4F0FB', padding: 12, fontFamily: 'Space Grotesk', minWidth: 200 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{w.name}</div>
-                    <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#5C7A89' }}>
-                      TD: {w.total_depth_m}m · {w.field_name}
-                    </div>
-                    <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#5C7A89', marginTop: 2 }}>
-                      {w.lat.toFixed(4)}°N {w.lon.toFixed(4)}°E
-                    </div>
-                    {riskyWellIds.has(w.id) && (
-                      <div style={{ marginTop: 8, color: '#00FF9D', fontSize: 11, fontFamily: 'IBM Plex Mono' }}>
-                        ⚠ {visibleAlerts.filter(a => a.nearby_well_id === w.id).length} risk event(s) at current depth
-                      </div>
-                    )}
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))}
+            {/* Offset Wells */}
+            {offsetWellsInRadius.map((w) => {
+              const distance = activeWell ? haversineKm(activeWell.lat, activeWell.lon, w.lat, w.lon) : 0
+              const isRisky = riskyWellIds.has(w.id)
+              const markerStyle = getWellMarkerStyle(w)
+              const wellAlerts = visibleAlerts.filter((a) => a.nearby_well_id === w.id)
 
-            {/* Active well */}
-            {activeWell && (
-              <CircleMarker
-                center={[activeWell.lat, activeWell.lon]}
-                radius={12}
-                pathOptions={{ color: '#F4F0FB', fillColor: '#00FF9D', fillOpacity: 1, weight: 2 }}
-              >
-                <Popup>
-                  <div style={{ background: '#130C1E', color: '#F4F0FB', padding: 12, fontFamily: 'Space Grotesk' }}>
-                    <div style={{ fontWeight: 700 }}>⬤ ACTIVE WELL</div>
-                    <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#00FF9D', marginTop: 4 }}>
-                      Current Depth: {currentDepth.toFixed(0)}m MD
+              return (
+                <CircleMarker
+                  key={w.id}
+                  center={[w.lat, w.lon]}
+                  radius={markerStyle.radius}
+                  eventHandlers={{
+                    click: () => setSelectedWell(w),
+                  }}
+                  pathOptions={{
+                    color: markerStyle.color,
+                    fillColor: markerStyle.fillColor,
+                    fillOpacity: markerStyle.fillOpacity,
+                    weight: markerStyle.weight,
+                  }}
+                >
+                  <Popup className="nwis-popup">
+                    <div className="p-1 min-w-[220px]">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-hairline mb-2">
+                        <span className="font-bold text-xs text-primary-glow font-sans">{w.name}</span>
+                        <span className="text-[10px] text-secondary font-mono">OFFSET</span>
+                      </div>
+                      <div className="text-xs text-slate-300 space-y-1">
+                        <div>Proximity: <strong className="text-foreground">{distance.toFixed(1)} km</strong></div>
+                        <div>Total Depth: <span className="font-mono">{w.total_depth_m}m</span></div>
+                        <div className="text-[11px] text-secondary">{w.field_name}</div>
+                      </div>
+                      {isRisky && (
+                        <div className="mt-2.5 p-2 rounded-lg bg-danger/10 border border-danger/30 text-danger text-[11px] font-medium flex items-center gap-1.5">
+                          <AlertTriangle size={13} className="shrink-0" />
+                          <span>{wellAlerts.length} correlated hazard(s) at current horizon</span>
+                        </div>
+                      )}
+                      <div className="mt-2 text-right">
+                        <button
+                          onClick={() => setSelectedWell(w)}
+                          className="text-[10px] text-primary-glow hover:underline font-medium"
+                        >
+                          View Full Intelligence →
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Popup>
-              </CircleMarker>
+                  </Popup>
+                </CircleMarker>
+              )
+            })}
+
+            {/* Active Drilling Well Marker */}
+            {activeWell && (
+              <>
+                <CircleMarker
+                  center={[activeWell.lat, activeWell.lon]}
+                  radius={18}
+                  pathOptions={{ color: '#10B981', fillColor: '#10B981', fillOpacity: 0.18, weight: 1.5 }}
+                />
+                <CircleMarker
+                  center={[activeWell.lat, activeWell.lon]}
+                  radius={9}
+                  eventHandlers={{
+                    click: () => setSelectedWell(activeWell),
+                  }}
+                  pathOptions={{ color: '#FFFFFF', fillColor: '#10B981', fillOpacity: 1, weight: 2.5 }}
+                >
+                  <Popup className="nwis-popup">
+                    <div className="p-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 font-bold text-xs text-accent mb-1">
+                        <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                        ACTIVE DRILLING TARGET
+                      </div>
+                      <div className="text-sm font-bold text-foreground">{activeWell.name}</div>
+                      <div className="text-xs text-secondary mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
+                      <div className="text-xs text-secondary">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              </>
             )}
           </MapContainer>
+        )}
+      </div>
 
-          {/* ── Depth Timeline Scrubber ── */}
-          <div className="border-t border-hairline px-6 py-4 shrink-0 bg-panel">
-            <div className="flex items-center gap-4">
-              {/* Play/Pause */}
-              <button
-                onClick={() => setPlaying((p) => !p)}
-                className="w-8 h-8 border border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-bg transition-all"
-              >
-                {playing ? <Pause size={14} /> : <Play size={14} />}
-              </button>
-
-              {/* Speed */}
-              <div className="flex gap-1">
-                {[1, 2, 5].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSpeed(s)}
-                    className={`font-mono text-xs px-2 py-1 border transition-all ${speed === s ? 'border-primary bg-primary text-bg' : 'border-hairline text-secondary hover:border-foreground/40'}`}
-                  >
-                    {s}x
-                  </button>
-                ))}
+      {/* ── Slide-Over Well Intelligence Inspector Drawer ── */}
+      <AnimatePresence>
+        {selectedWell && (
+          <motion.div
+            initial={{ opacity: 0, x: 340 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 340 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+            className="absolute top-20 right-5 sm:right-6 bottom-24 w-full max-w-[420px] bg-panel/95 backdrop-blur-md border border-hairline-light rounded-2xl shadow-2xl p-6 z-[1500] flex flex-col overflow-hidden"
+          >
+            <div className="flex items-start justify-between pb-3.5 border-b border-hairline">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    selectedWell.id === activeWell?.id ? 'bg-accent/15 text-accent border border-accent/30' : 'bg-primary/15 text-primary-glow border border-primary/30'
+                  }`}>
+                    {selectedWell.id === activeWell?.id ? 'Active Well' : 'Historical Offset'}
+                  </span>
+                  {selectedWellDist !== null && selectedWell.id !== activeWell?.id && (
+                    <span className="text-[11px] font-mono text-secondary">
+                      {selectedWellDist.toFixed(1)} km away
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-sans font-bold text-lg text-foreground mt-1">{selectedWell.name}</h3>
+                <p className="text-xs text-secondary">{selectedWell.field_name}</p>
               </div>
 
-              {/* Scrubber */}
-              <div className="flex-1 flex flex-col gap-1">
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.max(0, progress.length - 1)}
-                  value={currentIdx}
-                  onChange={(e) => { setCurrentIdx(Number(e.target.value)); setPlaying(false) }}
-                  className="w-full accent-primary cursor-pointer"
-                />
-                <div className="flex justify-between font-mono text-xs text-secondary">
-                  <span>0m</span>
-                  <span className="text-primary font-medium">{currentDepth.toFixed(0)}m MD</span>
-                  <span>{maxDepth}m TD</span>
+              <button
+                onClick={() => setSelectedWell(null)}
+                className="p-1.5 rounded-lg text-secondary hover:text-foreground hover:bg-panel-card transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              {/* Well Technical Metadata */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-3 rounded-xl bg-panel-card border border-hairline">
+                  <div className="text-[10px] text-secondary">Total Depth</div>
+                  <div className="font-mono font-bold text-foreground text-sm">{selectedWell.total_depth_m}m MD</div>
+                </div>
+                <div className="p-3 rounded-xl bg-panel-card border border-hairline">
+                  <div className="text-[10px] text-secondary">Spud Year</div>
+                  <div className="font-mono font-bold text-foreground text-sm">{selectedWell.spud_date ? new Date(selectedWell.spud_date).getFullYear() : '2023'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-panel-card border border-hairline col-span-2">
+                  <div className="text-[10px] text-secondary">Geospatial Coordinates</div>
+                  <div className="font-mono text-xs text-slate-300">
+                    {selectedWell.lat.toFixed(4)}°N, {selectedWell.lon.toFixed(4)}°E
+                  </div>
                 </div>
               </div>
 
-              {/* Timestamp */}
-              <div className="font-mono text-xs text-secondary text-right w-40 shrink-0">
-                {progress[currentIdx]?.timestamp
-                  ? new Date(progress[currentIdx].timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                  : '--'}
+              {/* Offset Hazard History */}
+              <div>
+                <div className="text-xs font-semibold text-foreground mb-2 flex items-center justify-between">
+                  <span>Correlated Hazard Catalog</span>
+                  <span className="text-[10px] text-secondary">{selectedWellAlerts.length} total event(s)</span>
+                </div>
+
+                {selectedWellAlerts.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-panel-card border border-hairline text-center text-xs text-secondary">
+                    <CheckCircle2 size={18} className="mx-auto mb-1 text-accent" />
+                    No historical drilling incidents reported for this offset well.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedWellAlerts.map((alt) => (
+                      <div
+                        key={alt.id}
+                        className="p-3.5 rounded-xl bg-panel-card border border-hairline text-xs space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            alt.severity === 'CRITICAL' ? 'badge-critical' : alt.severity === 'HIGH' ? 'badge-high' : 'badge-medium'
+                          }`}>
+                            {alt.severity}
+                          </span>
+                          <span className="font-mono text-[11px] text-secondary font-semibold">
+                            {alt.matched_depth_m}m MD
+                          </span>
+                        </div>
+                        <div className="font-semibold text-foreground">{alt.event_type}</div>
+                        <p className="text-[11px] text-secondary leading-relaxed">{alt.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Right — Alert Panel */}
-        <div className="w-80 border-l border-hairline flex flex-col bg-panel">
-          <div className="px-4 py-3 border-b border-hairline flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={14} className="text-primary" />
-              <span className="font-grotesk text-sm font-medium text-foreground">Risk Alerts</span>
+            <div className="pt-3 border-t border-hairline flex items-center justify-between text-xs">
+              <span className="text-[11px] text-secondary">Assam Basin Benchmark Suite</span>
+              <button
+                onClick={() => setSelectedWell(null)}
+                className="px-3.5 py-1.5 rounded-xl bg-panel-card hover:bg-panel-hover text-foreground font-medium text-xs border border-hairline transition-colors"
+              >
+                Close Inspector
+              </button>
             </div>
-            <span className="font-mono text-xs text-secondary">{visibleAlerts.length} active</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sleek Bottom Horizon Scrubber & Depth Control Dock ── */}
+      <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 z-[1000] flex justify-center pointer-events-none">
+        <div className="pointer-events-auto bg-panel/95 backdrop-blur-md border border-hairline px-6 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center gap-5 max-w-4xl w-full">
+          {/* Play / Pause & Speed Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPlaying(!playing)}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                playing
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-sm'
+                  : 'bg-primary text-white hover:bg-primary-glow shadow-sm'
+              }`}
+            >
+              {playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+            </button>
+
+            <button
+              onClick={() => setSpeed((s) => (s === 1 ? 2 : s === 2 ? 5 : 1))}
+              className="px-2.5 py-1 rounded-lg bg-panel-card border border-hairline text-xs font-mono text-secondary hover:text-foreground transition-colors"
+            >
+              {speed}x
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3">
-            {visibleAlerts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="text-success mb-2"><Activity size={24} /></div>
-                <div className="font-mono text-xs text-secondary">No risks at current depth.</div>
-                <div className="font-mono text-xs text-secondary mt-1">Advance the scrubber to drill deeper.</div>
-              </div>
-            ) : (
-              <AnimatePresence mode="popLayout">
-                {visibleAlerts.map((a) => (
-                  <AlertCard key={a.id} alert={a} />
-                ))}
-              </AnimatePresence>
-            )}
+          {/* Depth Slider with Formation Label */}
+          <div className="flex-1 flex flex-col gap-1 min-w-[240px]">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-secondary font-medium">
+                Depth Scrubber: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m</strong> / {maxDepth}m MD
+              </span>
+              <span className="text-[11px] font-medium text-primary-glow">
+                {currentFormation.name}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={progress.length - 1}
+              value={currentIdx}
+              onChange={(e) => {
+                setPlaying(false)
+                setCurrentIdx(Number(e.target.value))
+              }}
+              className="accent-primary cursor-pointer w-full h-1.5 bg-slate-800 rounded-lg"
+            />
           </div>
 
-          {/* Stats strip */}
-          <div className="border-t border-hairline p-4 grid grid-cols-2 gap-3">
-            {[
-              { label: 'Nearby Wells', value: historicalWells.length },
-              { label: 'Total Alerts', value: allAlerts.length },
-              { label: 'Current Depth', value: `${currentDepth.toFixed(0)}m` },
-              { label: 'Active Well', value: activeWell?.name.split(' ').pop() ?? '--' },
-            ].map((s) => (
-              <div key={s.label} className="border border-hairline p-2">
-                <div className="font-mono text-lg text-primary tabular-nums">{s.value}</div>
-                <div className="font-mono text-xs text-secondary mt-0.5">{s.label}</div>
-              </div>
-            ))}
-          </div>
+          {/* Reset Control */}
+          <button
+            onClick={() => { setPlaying(false); setCurrentIdx(0) }}
+            className="p-2 rounded-xl text-secondary hover:text-foreground hover:bg-panel-card transition-colors"
+            title="Reset to surface (0m)"
+          >
+            <RotateCcw size={15} />
+          </button>
         </div>
       </div>
     </div>
   )
 }
-
-
-

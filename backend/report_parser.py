@@ -12,19 +12,23 @@ from typing import List, Dict, Optional
 # Risk keyword taxonomy
 # ---------------------------------------------------------------------------
 RISK_PATTERNS = {
-    "stuck_pipe":    re.compile(r"stuck\s+pipe|pipe\s+stuck|freeing\s+stuck", re.I),
-    "mud_loss":      re.compile(r"mud\s+loss|lost\s+circulation|loss\s+of\s+circulation|lco|seepage\s+loss", re.I),
-    "kick":          re.compile(r"\bkick\b|well\s+control|influx|shut.?in", re.I),
-    "overpressure":  re.compile(r"overpressure|over-pressure|abnormal\s+pressure|high\s+pressure|pore\s+pressure", re.I),
-    "normal":        None,  # fallback
+    "kick":              re.compile(r"\bkick\b|well\s+control|influx|shut.?in|pit\s+gain|flow\s+check|gas\s+cutting", re.I),
+    "stuck_pipe":        re.compile(r"stuck\s+pipe|pipe\s+stuck|freeing\s+stuck|tight\s+hole|pack-?off|drag\s+spikes?", re.I),
+    "mud_loss":          re.compile(r"mud\s+loss|lost\s+circulation|loss\s+of\s+circulation|lco|seepage\s+loss|thief\s+zone|blind\s+drilling", re.I),
+    "overpressure":      re.compile(r"overpressure|over-pressure|abnormal\s+pressure|high\s+pressure|pore\s+pressure|ecd\s+spike", re.I),
+    "cementing":         re.compile(r"cement\s+plug|squeeze\s+cement|casing\s+shoe\s+leak|incomplete\s+return|poor\s+bonding|woc", re.I),
+    "drilling_problem":  re.compile(r"bit\s+balling|vibration|rop\s+drop|sloughing\s+shale|chert\s+stringer|drillstring\s+washout", re.I),
+    "normal":            None,  # fallback
 }
 
 SEVERITY_MAP = {
-    "stuck_pipe":   "high",
-    "mud_loss":     "medium",
-    "kick":         "critical",
-    "overpressure": "high",
-    "normal":       "low",
+    "kick":             "critical",
+    "stuck_pipe":       "high",
+    "overpressure":     "high",
+    "mud_loss":         "medium",
+    "cementing":        "medium",
+    "drilling_problem": "medium",
+    "normal":           "low",
 }
 
 # Matches depth-like values: 2450m, 2 450 m, 2450 MD, 2,450 ft
