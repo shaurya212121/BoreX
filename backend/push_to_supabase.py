@@ -22,9 +22,9 @@ import math
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
-from nearby_wells import find_nearby_wells
-from report_parser import parse_report_text
-from risk_correlator import correlate
+from services.nearby_wells import find_nearby_wells
+from services.report_parser import parse_report_text
+from services.risk_correlator import correlate
 from progress_simulator import simulate_drilling_progress
 
 load_dotenv()
@@ -297,7 +297,7 @@ def main():
     print(f"  - Active Progress Points: {len(progress)}")
     print(f"  - Risk Alerts: {len(alerts)}")
 
-    sql_path = os.path.join(os.path.dirname(__file__), "seed_indian_basin.sql")
+    sql_path = os.path.join(os.path.dirname(__file__), "data", "seed_indian_basin.sql")
     write_sql_seed_file(wells, reports, progress, alerts, sql_path)
 
     # If backend credentials are present, push directly to Supabase

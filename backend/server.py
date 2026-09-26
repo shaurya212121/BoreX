@@ -22,14 +22,14 @@ from fastapi import FastAPI, UploadFile, File, Form, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from telemetry_provider import SyntheticTelemetryProvider, FutureERTMACProvider
-from document_ingestion import DocumentIngestionPipeline
-from nlp_ner_pipeline import NLPNERPipeline
-from geological_correlator import GeologicalCorrelator
-from ml_risk_predictor import MLRiskPredictor
-from benchmark_evaluator import run_benchmark_evaluation
-from pdf_generator import generate_risk_dossier_pdf
-from data_models import (
+from services.telemetry_provider import SyntheticTelemetryProvider, FutureERTMACProvider
+from services.document_ingestion import DocumentIngestionPipeline
+from services.nlp_ner_pipeline import NLPNERPipeline
+from services.geological_correlator import GeologicalCorrelator
+from services.ml_risk_predictor import MLRiskPredictor
+from evaluation.benchmark_evaluator import run_benchmark_evaluation
+from services.pdf_generator import generate_risk_dossier_pdf
+from models.data_models import (
     generate_synthetic_mud_records,
     generate_synthetic_casing_programs,
     generate_synthetic_cement_programs,
@@ -64,7 +64,7 @@ risk_predictor = MLRiskPredictor()
 # Load benchmark wells reference
 def _get_benchmark_wells():
     try:
-        from push_to_supabase import generate_all_datasets
+        from push_to_supabase import generate_all_datasets  # noqa: sibling script
         wells, reports, progress, alerts = generate_all_datasets()
         return wells, reports, alerts
     except Exception:
@@ -250,6 +250,33 @@ def get_casing_cement(well_id: Optional[str] = Query(None)):
     return {"casing": casing_cache, "cement": cement_cache}
 
 
+@app.get("/api/wells")
+def get_wells():
+    return {"data": wells_cache}
+
+
+@app.get("/api/reports")
+def get_reports():
+    return {"data": reports_cache}
+
+
+@app.get("/api/progress")
+def get_progress(active_well_id: str = Query(...)):
+    # Note: push_to_supabase currently returns progress but we didn't cache it in server.py.
+    # Let's generate it on the fly or just return an empty array if we don't have it cached.
+    # We can rely on the progress_simulator logic.
+    from services.progress_simulator import simulate_drilling_progress
+    prog = simulate_drilling_progress(active_well_id)
+    return {"data": prog}
+
+
+@app.get("/api/alerts")
+def get_alerts(active_well_id: str = Query(...)):
+    # Filter alerts_cache for the active well
+    filtered = [a for a in alerts_cache if a.get("active_well_id") == active_well_id]
+    return {"data": filtered}
+
+
 @app.get("/api/analytics/trends")
 def get_trend_analytics(
     active_well_id: Optional[str] = None,
@@ -294,7 +321,7 @@ def get_benchmark_evaluation():
     Returns ACTUAL measured benchmark evaluation metric.
     No hardcoding, no predefinition.
     """
-    results_file = os.path.join(os.path.dirname(__file__), "benchmark_results.json")
+    results_file = os.path.join(os.path.dirname(__file__), "data", "benchmark_results.json")
     if os.path.exists(results_file):
         with open(results_file, "r", encoding="utf-8") as f:
             return json.load(f)

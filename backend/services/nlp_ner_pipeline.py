@@ -56,21 +56,51 @@ class NLPNERPipeline:
         }
 
         self.event_keywords = {
+            # Lost Circulation family
             "mud loss": ("Lost Circulation", "HIGH", 0.94),
             "total loss": ("Lost Circulation", "CRITICAL", 0.96),
+            "lost circulation": ("Lost Circulation", "HIGH", 0.96),
+            "loss of returns": ("Lost Circulation", "CRITICAL", 0.95),
             "seepage": ("Lost Circulation", "MEDIUM", 0.88),
+            "seepage loss": ("Lost Circulation", "MEDIUM", 0.92),
+            "fracture loss": ("Lost Circulation", "HIGH", 0.93),
+            "blind drilling": ("Lost Circulation", "CRITICAL", 0.90),
+            # Kick / Gas Influx family
             "gas kick": ("Kick", "CRITICAL", 0.97),
+            "well kick": ("Kick", "CRITICAL", 0.97),
             "gas influx": ("Gas Influx", "CRITICAL", 0.95),
+            "gas-cut": ("Gas Influx", "HIGH", 0.90),
             "influx": ("Gas Influx", "HIGH", 0.91),
+            "drilling break": ("Gas Influx", "MEDIUM", 0.82),
+            "connection gas": ("Gas Influx", "MEDIUM", 0.80),
+            "well flowing": ("Kick", "CRITICAL", 0.94),
+            # Stuck Pipe family
             "stuck pipe": ("Stuck Pipe", "CRITICAL", 0.96),
             "differential sticking": ("Differential Sticking", "HIGH", 0.97),
             "pack-off": ("Pack-off", "HIGH", 0.95),
             "tight hole": ("Tight Hole", "MEDIUM", 0.89),
-            "bit balling": ("Bit Balling", "MEDIUM", 0.91),
-            "washout": ("Washout", "MEDIUM", 0.90),
             "overpull": ("Stuck Pipe", "HIGH", 0.92),
+            "jarred": ("Stuck Pipe", "HIGH", 0.88),
+            # Wellbore Instability
+            "sloughing shale": ("Pack-off", "HIGH", 0.93),
+            "sloughing": ("Pack-off", "MEDIUM", 0.87),
+            "cavings": ("Pack-off", "MEDIUM", 0.85),
+            "hole instability": ("Wellbore Instability", "HIGH", 0.91),
+            "hole enlargement": ("Washout", "MEDIUM", 0.86),
+            "washout": ("Washout", "MEDIUM", 0.90),
+            # Bit / Mechanical
+            "bit balling": ("Bit Balling", "MEDIUM", 0.91),
+            "stick-slip": ("Bit Balling", "MEDIUM", 0.84),
+            # Casing & Cementing
             "cementing": ("Cementing Issue", "MEDIUM", 0.88),
-            "shoe integrity": ("Casing Issue", "LOW", 0.85)
+            "cement squeeze": ("Cementing Issue", "MEDIUM", 0.90),
+            "shoe integrity": ("Casing Issue", "LOW", 0.85),
+            "casing shoe": ("Casing Issue", "LOW", 0.83),
+            "leak-off test": ("Casing Issue", "LOW", 0.80),
+            # Pressure
+            "pore pressure": ("Formation Pressure Issue", "HIGH", 0.89),
+            "overpressure": ("Formation Pressure Issue", "HIGH", 0.92),
+            "abnormal pressure": ("Formation Pressure Issue", "HIGH", 0.91),
         }
 
     def process_text(self, text: str, source_doc: str = "DDR_ARCHIVE", page_num: int = 1) -> Dict[str, Any]:

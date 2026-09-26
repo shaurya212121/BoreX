@@ -1,6 +1,30 @@
-supabase==2.10.0
-python-dotenv==1.0.1
-haversine==2.8.1
-pandas==2.2.2
-numpy==1.26.4
-uuid==1.30
+# BoreX / NWIS Backend Dependencies
+# SIH 2026 Problem Statement: eRTMAC-NWIS
+
+# Core Server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Database
+supabase
+python-dotenv
+
+# Scientific Computing
+numpy
+scipy
+pandas
+
+# Geospatial
+haversine
+
+# Document Processing
+pypdf
+Pillow
+pytesseract
+
+# PDF Report Generation
+reportlab
+
+# NLP (optional - for future spaCy integration)
+# spacy==3.8.3
