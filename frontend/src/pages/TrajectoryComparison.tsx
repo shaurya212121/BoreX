@@ -174,7 +174,7 @@ function Trajectory3DCanvas({
         height={600}
         className="w-full h-full object-contain"
       />
-      <div className="absolute bottom-6 left-6 p-4 rounded-xl bg-panel/85 backdrop-blur-md border border-hairline text-xs text-secondary space-y-1.5 shadow-lg">
+      <div className="absolute bottom-6 left-6 p-4 rounded-xl bg-panel/85 backdrop-blur-md border border-hairline text-xs text-text-muted space-y-1.5 shadow-lg">
         <div className="text-foreground font-semibold text-xs tracking-wide">3D Subsurface Orbit Controls</div>
         <div>Click & drag to rotate view angle</div>
         <div className="flex items-center gap-4 pt-1">
@@ -250,14 +250,14 @@ export default function TrajectoryComparison() {
                 3D Spatial Surveys
               </span>
             </div>
-            <p className="text-sm text-secondary mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-sm text-text-muted mt-1.5 max-w-2xl leading-relaxed">
               Comparative trajectory profiles, directional dogleg analysis, and 3D wellbore anti-collision clearance against Assam Basin offset wells.
             </p>
           </div>
 
           {/* Offset Well Selector Dock */}
-          <div className="flex items-center gap-2.5 bg-panel-card border border-hairline p-2 px-3.5 rounded-2xl shadow-sm text-xs">
-            <span className="text-secondary font-medium">Compare with:</span>
+          <div className="flex items-center gap-2.5 glass-card p-2 px-3.5 rounded-2xl shadow-sm text-xs">
+            <span className="text-text-muted font-medium">Compare with:</span>
             <select
               value={selectedOffsetWellId}
               onChange={(e) => setSelectedOffsetWellId(e.target.value)}
@@ -274,62 +274,62 @@ export default function TrajectoryComparison() {
 
         {/* ── Spatial Metric Highlights Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex items-center justify-between shadow-sm">
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex items-center justify-between shadow-sm">
             <div>
-              <div className="text-xs text-secondary font-medium">Anti-Collision Status</div>
+              <div className="text-xs text-text-muted font-medium">Anti-Collision Status</div>
               <div className="text-lg font-bold text-accent mt-1">Safe Clearance (&gt; 250m)</div>
-              <div className="text-[11px] text-secondary mt-0.5">Min Separation: 284.2 m</div>
+              <div className="text-[11px] text-text-muted mt-0.5">Min Separation: 284.2 m</div>
             </div>
             <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
               <ShieldCheck size={24} />
             </div>
           </div>
 
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex items-center justify-between shadow-sm">
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex items-center justify-between shadow-sm">
             <div>
-              <div className="text-xs text-secondary font-medium">Profile Geometry Match</div>
+              <div className="text-xs text-text-muted font-medium">Profile Geometry Match</div>
               <div className="text-lg font-mono font-bold text-foreground mt-1">{trajectorySimilarity}% Similarity</div>
-              <div className="text-[11px] text-secondary mt-0.5">Assam Trend Benchmark</div>
+              <div className="text-[11px] text-text-muted mt-0.5">Assam Trend Benchmark</div>
             </div>
             <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary-glow">
               <Sparkles size={22} />
             </div>
           </div>
 
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex items-center justify-between shadow-sm">
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex items-center justify-between shadow-sm">
             <div>
-              <div className="text-xs text-secondary font-medium">Max Active Inclination</div>
+              <div className="text-xs text-text-muted font-medium">Max Active Inclination</div>
               <div className="text-lg font-mono font-bold text-foreground mt-1">
                 {activeSurveys[activeSurveys.length - 1]?.inclination_deg.toFixed(1) || '24.5'}°
               </div>
-              <div className="text-[11px] text-secondary mt-0.5">Tangent Section Angle</div>
+              <div className="text-[11px] text-text-muted mt-0.5">Tangent Section Angle</div>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-panel border border-hairline flex items-center justify-center text-secondary">
+            <div className="w-12 h-12 rounded-xl bg-panel border border-hairline flex items-center justify-center text-text-muted">
               <Compass size={22} />
             </div>
           </div>
 
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex items-center justify-between shadow-sm">
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex items-center justify-between shadow-sm">
             <div>
-              <div className="text-xs text-secondary font-medium">Peak Dogleg Severity</div>
+              <div className="text-xs text-text-muted font-medium">Peak Dogleg Severity</div>
               <div className="text-lg font-mono font-bold text-foreground mt-1">2.4° / 30m</div>
               <div className="text-[11px] text-accent mt-0.5">Within Safe Envelope (&lt; 3°)</div>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-panel border border-hairline flex items-center justify-center text-secondary">
+            <div className="w-12 h-12 rounded-xl bg-panel border border-hairline flex items-center justify-center text-text-muted">
               <TrendingUp size={22} />
             </div>
           </div>
         </div>
 
         {/* ── Subsurface Visualizer Card with Mode Tabs ── */}
-        <div className="bg-panel-card border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+        <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
           {/* View Mode Segmented Controls */}
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div className="flex items-center gap-1.5 bg-panel border border-hairline p-1.5 rounded-xl">
               <button
                 onClick={() => setViewMode('profile')}
                 className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                  viewMode === 'profile' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-foreground'
+                  viewMode === 'profile' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-foreground'
                 }`}
               >
                 Vertical Profile (TVD vs MD)
@@ -337,7 +337,7 @@ export default function TrajectoryComparison() {
               <button
                 onClick={() => setViewMode('plan')}
                 className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                  viewMode === 'plan' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-foreground'
+                  viewMode === 'plan' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-foreground'
                 }`}
               >
                 Plan View (North vs East)
@@ -345,7 +345,7 @@ export default function TrajectoryComparison() {
               <button
                 onClick={() => setViewMode('dls')}
                 className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                  viewMode === 'dls' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-foreground'
+                  viewMode === 'dls' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-foreground'
                 }`}
               >
                 Dogleg Severity (DLS)
@@ -353,7 +353,7 @@ export default function TrajectoryComparison() {
               <button
                 onClick={() => setViewMode('3d')}
                 className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                  viewMode === '3d' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-foreground'
+                  viewMode === '3d' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-foreground'
                 }`}
               >
                 Interactive 3D Subsurface
@@ -434,11 +434,11 @@ export default function TrajectoryComparison() {
         </div>
 
         {/* ── Subsurface Anti-Collision & Survey Intercept Table ── */}
-        <div className="bg-panel-card border border-hairline rounded-2xl p-6 sm:p-8 space-y-4 shadow-sm">
+        <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div>
-              <h3 className="font-sans font-bold text-base text-foreground">Anti-Collision Survey Interval Log</h3>
-              <p className="text-xs text-secondary mt-1">
+              <h3 className="font-grotesk font-bold text-base text-foreground">Anti-Collision Survey Interval Log</h3>
+              <p className="text-xs text-text-muted mt-1">
                 Comparative 3D Euclidean distance and ellipse of uncertainty clearance across active survey stations.
               </p>
             </div>
@@ -449,7 +449,7 @@ export default function TrajectoryComparison() {
 
           <div className="overflow-x-auto rounded-xl border border-hairline">
             <table className="w-full text-left font-mono text-xs">
-              <thead className="bg-panel text-secondary border-b border-hairline text-[11px]">
+              <thead className="bg-panel text-text-muted border-b border-hairline text-[11px]">
                 <tr>
                   <th className="p-3.5">MD (m)</th>
                   <th className="p-3.5">FORMATION</th>
@@ -472,7 +472,7 @@ export default function TrajectoryComparison() {
                   return (
                     <tr key={i} className="hover:bg-panel/40">
                       <td className="p-3.5 text-foreground font-bold">{pt.md_m.toFixed(1)}</td>
-                      <td className="p-3.5 text-secondary font-sans">{pt.formation || 'Tipam Sandstone'}</td>
+                      <td className="p-3.5 text-text-muted font-sans">{pt.formation || 'Tipam Sandstone'}</td>
                       <td className="p-3.5">{pt.active_tvd.toFixed(1)}</td>
                       <td className="p-3.5">{pt.active_inc.toFixed(1)}°</td>
                       <td className="p-3.5">{pt.offset_tvd !== null ? pt.offset_tvd.toFixed(1) : '—'}</td>

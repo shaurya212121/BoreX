@@ -265,7 +265,7 @@ def get_progress(active_well_id: str = Query(...)):
     # Note: push_to_supabase currently returns progress but we didn't cache it in server.py.
     # Let's generate it on the fly or just return an empty array if we don't have it cached.
     # We can rely on the progress_simulator logic.
-    from services.progress_simulator import simulate_drilling_progress
+    from progress_simulator import simulate_drilling_progress
     prog = simulate_drilling_progress(active_well_id)
     return {"data": prog}
 
@@ -285,16 +285,19 @@ def get_trend_analytics(
     """
     Returns comparative multi-well depth trends for ROP, Torque, SPP, Mud Weight, ECD.
     """
-    active_pts = active_provider.get_stream_chunk(300.0, 3650.0, step=30.0)
+    active_pts = active_provider.get_stream_chunk(300.0, 3650.0, step_m=30.0)
     
     # Selected offset well trajectory & mud records
-    offset_surveys = [p for p in trajectories_cache if "07" in p["well_name"]]
-    offset_muds = [m for m in mud_cache if "07" in m["well_name"]]
+    target_offset = offset_well_id if offset_well_id else "07"
+    
+    offset_surveys = [p for p in trajectories_cache if target_offset in p["well_name"]]
+    offset_muds = [m for m in mud_cache if target_offset in m["well_name"]]
 
     return {
         "active_stream": active_pts,
+        "active_well_id": active_well_id,
         "offset_comparison": {
-            "well_name": "IND-NWIS-07",
+            "well_name": target_offset,
             "distance_km": 16.7,
             "surveys": offset_surveys,
             "mud_records": offset_muds

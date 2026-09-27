@@ -6,7 +6,6 @@ import {
   Play,
   Pause,
   AlertTriangle,
-  Loader2,
   ShieldAlert,
   X,
   Target,
@@ -203,23 +202,23 @@ export default function TacticalMap() {
   const selectedWellDist = selectedWell && activeWell ? haversineKm(activeWell.lat, activeWell.lon, selectedWell.lat, selectedWell.lon) : null
 
   return (
-    <div className="flex flex-col h-full w-full bg-bg text-foreground select-none relative overflow-hidden">
+    <div className="flex flex-col h-full w-full text-foreground select-none relative overflow-hidden" style={{ background: '#050508' }}>
       {/* ── Top Floating Tactical HUD ── */}
       <div className="absolute top-5 left-5 right-5 sm:top-6 sm:left-6 sm:right-6 z-[1000] flex flex-wrap items-center justify-between gap-3.5 pointer-events-none">
         {/* Left Stats Pill */}
-        <div className="pointer-events-auto flex items-center gap-3.5 bg-panel/90 backdrop-blur-md border border-hairline px-4.5 py-3 rounded-2xl shadow-xl">
+        <div className="pointer-events-auto flex items-center gap-3.5 glass px-4.5 py-3 rounded-2xl shadow-xl">
           <div className="flex items-center gap-2.5 pr-3.5 border-r border-hairline">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
+            <span className="relative flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span></span>
             <div className="flex flex-col">
-              <span className="text-[10px] text-secondary font-medium uppercase tracking-wider">Active Horizon</span>
+              <span className="text-[10px] text-text-muted font-medium uppercase tracking-[0.15em]">Active Horizon</span>
               <span className="font-mono text-sm font-bold text-foreground">
-                {currentDepth.toFixed(0)}m <span className="text-xs text-secondary font-normal font-sans">({currentFormation.name})</span>
+                {currentDepth.toFixed(0)}m <span className="text-xs text-text-muted font-normal font-sans">({currentFormation.name})</span>
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3.5 text-xs">
-            <div className="flex items-center gap-1.5 text-secondary">
+            <div className="flex items-center gap-1.5 text-text-muted">
               <Target size={14} className="text-primary-glow" />
               <span><strong className="text-foreground">{offsetWellsInRadius.length}</strong> offsets in {searchRadiusKm}km</span>
             </div>
@@ -236,23 +235,23 @@ export default function TacticalMap() {
         {/* Right Controls: Key Status, Radius & Basemap Selector */}
         <div className="pointer-events-auto flex items-center gap-2.5">
           {mapApiKey && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-panel/90 backdrop-blur-md border border-hairline text-accent text-xs font-mono shadow-xl">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass text-accent text-xs font-mono shadow-xl">
               <Key size={13} className="text-accent" />
               <span>Map Key: Configured</span>
             </div>
           )}
 
           {/* Radius Selector */}
-          <div className="flex items-center gap-1 bg-panel/90 backdrop-blur-md border border-hairline p-1 rounded-xl shadow-xl">
-            <span className="text-[10px] text-secondary font-medium px-2">Radius:</span>
+          <div className="flex items-center gap-1 glass p-1 rounded-xl shadow-xl">
+            <span className="text-[10px] text-text-muted font-medium px-2">Radius:</span>
             {[25, 50, 80, 120].map((r) => (
               <button
                 key={r}
                 onClick={() => setSearchRadiusKm(r)}
-                className={`text-xs px-2.5 py-1 rounded-lg transition-all font-mono ${
+                className={`text-xs px-2.5 py-1 rounded-lg transition-all duration-300 font-mono ${
                   searchRadiusKm === r
-                    ? 'bg-primary text-white font-semibold shadow-sm'
-                    : 'text-secondary hover:text-foreground hover:bg-panel-card'
+                    ? 'bg-primary/90 text-white font-semibold shadow-sm shadow-primary/20'
+                    : 'text-text-muted hover:text-foreground hover:bg-white/[0.05]'
                 }`}
               >
                 {r}km
@@ -261,15 +260,15 @@ export default function TacticalMap() {
           </div>
 
           {/* Basemap Toggle */}
-          <div className="flex items-center gap-1 bg-panel/90 backdrop-blur-md border border-hairline p-1 rounded-xl shadow-xl">
+          <div className="flex items-center gap-1 glass p-1 rounded-xl shadow-xl">
             {(Object.keys(BASEMAP_PROVIDERS) as BasemapKey[]).map((key) => (
               <button
                 key={key}
                 onClick={() => setActiveBasemap(key)}
-                className={`text-xs px-2.5 py-1 rounded-lg transition-all ${
+                className={`text-xs px-2.5 py-1 rounded-lg transition-all duration-300 ${
                   activeBasemap === key
-                    ? 'bg-panel-card text-primary-glow font-semibold border border-hairline-light'
-                    : 'text-secondary hover:text-foreground'
+                    ? 'bg-white/[0.08] text-primary-glow font-semibold border border-hairline-light'
+                    : 'text-text-muted hover:text-foreground'
                 }`}
               >
                 {BASEMAP_PROVIDERS[key].label}
@@ -282,15 +281,18 @@ export default function TacticalMap() {
       {/* ── Main Map Canvas ── */}
       <div className="flex-1 w-full h-full relative">
         {loading ? (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-bg gap-3">
-            <Loader2 size={32} className="animate-spin text-primary-glow" />
-            <p className="text-xs text-secondary font-mono">Loading Assam Basin Offset Geometry...</p>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4" style={{ background: '#050508' }}>
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 w-12 h-12 rounded-full bg-primary/5 blur-xl" />
+            </div>
+            <p className="text-xs text-text-muted font-mono tracking-wider">Loading Assam Basin Offset Geometry...</p>
           </div>
         ) : error ? (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-bg gap-2 text-danger p-6 text-center">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-danger p-6 text-center" style={{ background: '#050508' }}>
             <AlertTriangle size={36} />
-            <div className="font-semibold text-sm">Map Initialization Error</div>
-            <div className="text-xs text-secondary max-w-sm">{error}</div>
+            <div className="font-grotesk font-semibold text-sm">Map Initialization Error</div>
+            <div className="text-xs text-text-muted max-w-sm">{error}</div>
           </div>
         ) : (
           <MapContainer
@@ -361,12 +363,12 @@ export default function TacticalMap() {
                     <div className="p-1 min-w-[220px]">
                       <div className="flex items-center justify-between pb-1.5 border-b border-hairline mb-2">
                         <span className="font-bold text-xs text-primary-glow font-sans">{w.name}</span>
-                        <span className="text-[10px] text-secondary font-mono">OFFSET</span>
+                        <span className="text-[10px] text-text-muted font-mono">OFFSET</span>
                       </div>
                       <div className="text-xs text-slate-300 space-y-1">
                         <div>Proximity: <strong className="text-foreground">{distance.toFixed(1)} km</strong></div>
                         <div>Total Depth: <span className="font-mono">{w.total_depth_m}m</span></div>
-                        <div className="text-[11px] text-secondary">{w.field_name}</div>
+                        <div className="text-[11px] text-text-muted">{w.field_name}</div>
                       </div>
                       {isRisky && (
                         <div className="mt-2.5 p-2 rounded-lg bg-danger/10 border border-danger/30 text-danger text-[11px] font-medium flex items-center gap-1.5">
@@ -411,8 +413,8 @@ export default function TacticalMap() {
                         ACTIVE DRILLING TARGET
                       </div>
                       <div className="text-sm font-bold text-foreground">{activeWell.name}</div>
-                      <div className="text-xs text-secondary mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
-                      <div className="text-xs text-secondary">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
+                      <div className="text-xs text-text-muted mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
+                      <div className="text-xs text-text-muted">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
                     </div>
                   </Popup>
                 </CircleMarker>
@@ -430,7 +432,7 @@ export default function TacticalMap() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 340 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="absolute top-20 right-5 sm:right-6 bottom-24 w-full max-w-[420px] bg-panel/95 backdrop-blur-md border border-hairline-light rounded-2xl shadow-2xl p-6 z-[1500] flex flex-col overflow-hidden"
+            className="absolute top-20 right-5 sm:right-6 bottom-24 w-full max-w-[420px] glass-panel border-hairline-light rounded-2xl shadow-2xl p-6 z-[1500] flex flex-col overflow-hidden"
           >
             <div className="flex items-start justify-between pb-3.5 border-b border-hairline">
               <div>
@@ -441,18 +443,18 @@ export default function TacticalMap() {
                     {selectedWell.id === activeWell?.id ? 'Active Well' : 'Historical Offset'}
                   </span>
                   {selectedWellDist !== null && selectedWell.id !== activeWell?.id && (
-                    <span className="text-[11px] font-mono text-secondary">
+                    <span className="text-[11px] font-mono text-text-muted">
                       {selectedWellDist.toFixed(1)} km away
                     </span>
                   )}
                 </div>
                 <h3 className="font-sans font-bold text-lg text-foreground mt-1">{selectedWell.name}</h3>
-                <p className="text-xs text-secondary">{selectedWell.field_name}</p>
+                <p className="text-xs text-text-muted">{selectedWell.field_name}</p>
               </div>
 
               <button
                 onClick={() => setSelectedWell(null)}
-                className="p-1.5 rounded-lg text-secondary hover:text-foreground hover:bg-panel-card transition-colors"
+                className="p-1.5 rounded-lg text-text-muted hover:text-foreground hover:glass-card transition-colors"
               >
                 <X size={18} />
               </button>
@@ -461,16 +463,16 @@ export default function TacticalMap() {
             <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
               {/* Well Technical Metadata */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-3 rounded-xl bg-panel-card border border-hairline">
-                  <div className="text-[10px] text-secondary">Total Depth</div>
+                <div className="p-3 rounded-xl glass-card">
+                  <div className="text-[10px] text-text-muted">Total Depth</div>
                   <div className="font-mono font-bold text-foreground text-sm">{selectedWell.total_depth_m}m MD</div>
                 </div>
-                <div className="p-3 rounded-xl bg-panel-card border border-hairline">
-                  <div className="text-[10px] text-secondary">Spud Year</div>
+                <div className="p-3 rounded-xl glass-card">
+                  <div className="text-[10px] text-text-muted">Spud Year</div>
                   <div className="font-mono font-bold text-foreground text-sm">{selectedWell.spud_date ? new Date(selectedWell.spud_date).getFullYear() : '2023'}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-panel-card border border-hairline col-span-2">
-                  <div className="text-[10px] text-secondary">Geospatial Coordinates</div>
+                <div className="p-3 rounded-xl glass-card col-span-2">
+                  <div className="text-[10px] text-text-muted">Geospatial Coordinates</div>
                   <div className="font-mono text-xs text-slate-300">
                     {selectedWell.lat.toFixed(4)}°N, {selectedWell.lon.toFixed(4)}°E
                   </div>
@@ -481,11 +483,11 @@ export default function TacticalMap() {
               <div>
                 <div className="text-xs font-semibold text-foreground mb-2 flex items-center justify-between">
                   <span>Correlated Hazard Catalog</span>
-                  <span className="text-[10px] text-secondary">{selectedWellAlerts.length} total event(s)</span>
+                  <span className="text-[10px] text-text-muted">{selectedWellAlerts.length} total event(s)</span>
                 </div>
 
                 {selectedWellAlerts.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-panel-card border border-hairline text-center text-xs text-secondary">
+                  <div className="p-4 rounded-xl glass-card text-center text-xs text-text-muted">
                     <CheckCircle2 size={18} className="mx-auto mb-1 text-accent" />
                     No historical drilling incidents reported for this offset well.
                   </div>
@@ -494,7 +496,7 @@ export default function TacticalMap() {
                     {selectedWellAlerts.map((alt) => (
                       <div
                         key={alt.id}
-                        className="p-3.5 rounded-xl bg-panel-card border border-hairline text-xs space-y-1.5"
+                        className="p-3.5 rounded-xl glass-card text-xs space-y-1.5"
                       >
                         <div className="flex items-center justify-between">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -502,12 +504,12 @@ export default function TacticalMap() {
                           }`}>
                             {alt.severity}
                           </span>
-                          <span className="font-mono text-[11px] text-secondary font-semibold">
+                          <span className="font-mono text-[11px] text-text-muted font-semibold">
                             {alt.matched_depth_m}m MD
                           </span>
                         </div>
                         <div className="font-semibold text-foreground">{alt.event_type}</div>
-                        <p className="text-[11px] text-secondary leading-relaxed">{alt.message}</p>
+                        <p className="text-[11px] text-text-muted leading-relaxed">{alt.message}</p>
                       </div>
                     ))}
                   </div>
@@ -516,10 +518,10 @@ export default function TacticalMap() {
             </div>
 
             <div className="pt-3 border-t border-hairline flex items-center justify-between text-xs">
-              <span className="text-[11px] text-secondary">Assam Basin Benchmark Suite</span>
+              <span className="text-[11px] text-text-muted">Assam Basin Benchmark Suite</span>
               <button
                 onClick={() => setSelectedWell(null)}
-                className="px-3.5 py-1.5 rounded-xl bg-panel-card hover:bg-panel-hover text-foreground font-medium text-xs border border-hairline transition-colors"
+                className="px-3.5 py-1.5 rounded-xl glass-card hover:bg-panel-hover text-foreground font-medium text-xs border border-hairline transition-colors"
               >
                 Close Inspector
               </button>
@@ -530,7 +532,7 @@ export default function TacticalMap() {
 
       {/* ── Sleek Bottom Horizon Scrubber & Depth Control Dock ── */}
       <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 z-[1000] flex justify-center pointer-events-none">
-        <div className="pointer-events-auto bg-panel/95 backdrop-blur-md border border-hairline px-6 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center gap-5 max-w-4xl w-full">
+        <div className="pointer-events-auto glass px-6 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center gap-5 max-w-4xl w-full">
           {/* Play / Pause & Speed Controls */}
           <div className="flex items-center gap-2">
             <button
@@ -546,7 +548,7 @@ export default function TacticalMap() {
 
             <button
               onClick={() => setSpeed((s) => (s === 1 ? 2 : s === 2 ? 5 : 1))}
-              className="px-2.5 py-1 rounded-lg bg-panel-card border border-hairline text-xs font-mono text-secondary hover:text-foreground transition-colors"
+              className="px-2.5 py-1 rounded-lg glass-card text-xs font-mono text-text-muted hover:text-foreground transition-colors"
             >
               {speed}x
             </button>
@@ -555,7 +557,7 @@ export default function TacticalMap() {
           {/* Depth Slider with Formation Label */}
           <div className="flex-1 flex flex-col gap-1 min-w-[240px]">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-secondary font-medium">
+              <span className="text-text-muted font-medium">
                 Depth Scrubber: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m</strong> / {maxDepth}m MD
               </span>
               <span className="text-[11px] font-medium text-primary-glow">
@@ -578,7 +580,7 @@ export default function TacticalMap() {
           {/* Reset Control */}
           <button
             onClick={() => { setPlaying(false); setCurrentIdx(0) }}
-            className="p-2 rounded-xl text-secondary hover:text-foreground hover:bg-panel-card transition-colors"
+            className="p-2 rounded-xl text-text-muted hover:text-foreground hover:glass-card transition-colors"
             title="Reset to surface (0m)"
           >
             <RotateCcw size={15} />

@@ -287,7 +287,7 @@ export default function Reports() {
                 Multi-Well Decision Support
               </span>
             </div>
-            <p className="text-sm text-secondary mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-sm text-text-muted mt-1.5 max-w-2xl leading-relaxed">
               Synthesized subsurface hazard lookahead dossiers and verified offset incident correlations across the 6 Upper Assam benchmark wells.
             </p>
           </div>
@@ -312,44 +312,44 @@ export default function Reports() {
 
         {/* ── Level 1: Subsurface Risk Summary Metrics Strip ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex flex-col justify-between shadow-xs">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Monitored Grid</span>
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex flex-col justify-between shadow-xs">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Monitored Grid</span>
             <div className="mt-3">
               <div className="text-3xl font-bold font-mono text-foreground">6 Wells</div>
-              <div className="text-xs text-secondary mt-1">Assam Shelf Benchmark Suite</div>
+              <div className="text-xs text-text-muted mt-1">Assam Shelf Benchmark Suite</div>
             </div>
           </div>
 
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex flex-col justify-between shadow-xs">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Critical Hazards</span>
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex flex-col justify-between shadow-xs">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Critical Hazards</span>
             <div className="mt-3">
               <div className="text-3xl font-bold font-mono text-danger">2 Alerts</div>
               <div className="text-xs text-danger/80 mt-1 font-medium">Differential Sticking Threat</div>
             </div>
           </div>
 
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex flex-col justify-between shadow-xs">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Lookahead Events</span>
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex flex-col justify-between shadow-xs">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Lookahead Events</span>
             <div className="mt-3">
               <div className="text-3xl font-bold font-mono text-warning">2 Active</div>
               <div className="text-xs text-warning/80 mt-1 font-medium">Lost Circulation & Gas Influx</div>
             </div>
           </div>
 
-          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl bg-panel-card border border-hairline flex flex-col justify-between shadow-xs">
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Stratigraphic Range</span>
+          <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex flex-col justify-between shadow-xs">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Stratigraphic Range</span>
             <div className="mt-3">
               <div className="text-3xl font-bold font-mono text-accent">5 Horizons</div>
-              <div className="text-xs text-secondary mt-1 font-medium">Surface to 3,820m MD</div>
+              <div className="text-xs text-text-muted mt-1 font-medium">Surface to 3,820m MD</div>
             </div>
           </div>
         </div>
 
         {/* ── Level 2: Search & Filter Toolbar ── */}
-        <div className="flex flex-wrap items-center justify-between gap-5 p-5 sm:p-6 pl-7 sm:pl-8 rounded-2xl bg-panel-card border border-hairline shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-5 p-5 sm:p-6 pl-7 sm:pl-8 rounded-2xl glass-card shadow-xs">
           <div className="flex items-center gap-3.5 flex-1 min-w-[280px]">
             <div className="relative flex-1 flex items-center">
-              <div className="absolute left-4.5 pointer-events-none flex items-center justify-center text-secondary">
+              <div className="absolute left-4.5 pointer-events-none flex items-center justify-center text-text-muted">
                 <Search size={16} />
               </div>
               <input
@@ -358,7 +358,7 @@ export default function Reports() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ paddingLeft: '3.25rem' }}
-                className="w-full bg-panel border border-hairline rounded-xl pr-4 py-3 text-xs sm:text-sm text-foreground placeholder:text-secondary/50 outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all shadow-inner"
+                className="w-full bg-panel border border-hairline rounded-xl pr-4 py-3 text-xs sm:text-sm text-foreground placeholder:text-text-muted/50 outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all shadow-inner"
               />
             </div>
 
@@ -371,7 +371,7 @@ export default function Reports() {
                   className={`text-xs px-4 py-2 rounded-xl font-medium transition-all cursor-pointer ${
                     severityFilter === sev
                       ? 'bg-primary text-white shadow-xs font-semibold'
-                      : 'text-secondary hover:text-foreground bg-panel border border-hairline hover:bg-panel-hover'
+                      : 'text-text-muted hover:text-foreground glass hover:bg-white/[0.06]'
                   }`}
                 >
                   {sev}
@@ -381,7 +381,7 @@ export default function Reports() {
           </div>
 
           {/* Sort Selector */}
-          <div className="flex items-center gap-2.5 text-xs text-secondary shrink-0">
+          <div className="flex items-center gap-2.5 text-xs text-text-muted shrink-0">
             <ArrowUpDown size={14} />
             <span className="font-medium">Sort by:</span>
             <select
@@ -400,7 +400,7 @@ export default function Reports() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <Loader2 size={32} className="animate-spin text-primary-glow" />
-            <p className="text-xs text-secondary font-mono">Compiling Upper Assam Subsurface Intelligence...</p>
+            <p className="text-xs text-text-muted font-mono">Compiling Upper Assam Subsurface Intelligence...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
@@ -416,7 +416,7 @@ export default function Reports() {
                   className={`p-7 pl-8 sm:p-8 sm:pl-10 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-6 shadow-sm relative overflow-hidden ${
                     isSelected
                       ? 'bg-panel-hover border-primary-glow shadow-lg ring-1 ring-primary-glow/40 border-l-4 border-l-primary-glow'
-                      : 'bg-panel-card border-hairline hover:border-hairline-light hover:bg-panel-hover/50'
+                      : 'glass-card border-hairline hover:border-hairline-light hover:bg-panel-hover/50'
                   }`}
                 >
                   <div className="space-y-4">
@@ -431,7 +431,7 @@ export default function Reports() {
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-secondary mt-1 font-medium">
+                        <div className="text-xs text-text-muted mt-1 font-medium">
                           {p.distanceKm > 0 ? `${p.distanceKm.toFixed(1)} km from active target` : 'Active drilling borehole'}
                         </div>
                       </div>
@@ -454,7 +454,7 @@ export default function Reports() {
                         </span>
                       </div>
 
-                      <div className="text-xs text-secondary pl-7">
+                      <div className="text-xs text-text-muted pl-7">
                         Target Horizon: <strong className="text-slate-200">{p.formation}</strong>
                       </div>
                     </div>
@@ -462,7 +462,7 @@ export default function Reports() {
                     {/* Risk Probability Progress */}
                     <div className="space-y-2 pt-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-secondary text-[11px] font-medium uppercase tracking-wider">Assam Benchmark Risk Likelihood</span>
+                        <span className="text-text-muted text-[11px] font-medium uppercase tracking-wider">Assam Benchmark Risk Likelihood</span>
                         <span className="font-mono font-bold text-foreground text-sm">{p.riskProbability}%</span>
                       </div>
                       <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
@@ -478,7 +478,7 @@ export default function Reports() {
 
                   {/* Card Footer */}
                   <div className="pt-4 border-t border-hairline flex items-center justify-between text-xs">
-                    <span className="text-secondary font-mono text-xs">Total Depth: <strong className="text-foreground">{p.well.total_depth_m}m MD</strong></span>
+                    <span className="text-text-muted font-mono text-xs">Total Depth: <strong className="text-foreground">{p.well.total_depth_m}m MD</strong></span>
                     <span className="text-primary-glow font-medium flex items-center gap-1.5 group hover:underline text-xs sm:text-sm">
                       Inspect Decision Dossier <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                     </span>
@@ -490,7 +490,7 @@ export default function Reports() {
         )}
 
         {/* ── Level 4: Stratigraphic Subsurface Risk Distribution Matrix (Spacious 2-Col Non-Overflowing Grid) ── */}
-        <div className="p-7 sm:p-9 pl-8 sm:pl-10 rounded-2xl bg-panel-card border border-hairline space-y-7 shadow-sm">
+        <div className="p-7 sm:p-9 pl-8 sm:pl-10 rounded-2xl glass-card space-y-7 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary-glow shrink-0">
@@ -500,13 +500,13 @@ export default function Reports() {
                 <h3 className="text-lg font-bold text-foreground font-sans">
                   Upper Assam Stratigraphic Hazard Matrix & Correlation
                 </h3>
-                <p className="text-xs text-secondary mt-0.5">
+                <p className="text-xs text-text-muted mt-0.5">
                   Cross-well geological risk lookahead mapped by formation interval across regional strike
                 </p>
               </div>
             </div>
 
-            <span className="text-xs font-mono text-secondary px-3.5 py-1.5 rounded-xl bg-panel border border-hairline font-medium">
+            <span className="text-xs font-mono text-text-muted px-3.5 py-1.5 rounded-xl bg-panel border border-hairline font-medium">
               Litho-Mechanical Model (Assam Shelf)
             </span>
           </div>
@@ -520,11 +520,11 @@ export default function Reports() {
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-hairline">
                     <span className="font-bold text-base text-foreground font-sans">{h.name}</span>
-                    <span className="font-mono text-secondary text-xs px-2.5 py-1 rounded-md bg-panel-card border border-hairline font-medium">
+                    <span className="font-mono text-text-muted text-xs px-2.5 py-1 rounded-md glass-card font-medium">
                       {h.interval}
                     </span>
                   </div>
-                  <div className="space-y-2 text-secondary text-xs leading-relaxed">
+                  <div className="space-y-2 text-text-muted text-xs leading-relaxed">
                     <div><strong className="text-slate-200 font-medium">Lithological Facies:</strong> {h.lithology}</div>
                     <div><strong className="text-slate-200 font-medium">Pore Pressure Regime:</strong> {h.pressure}</div>
                     <div className="text-primary-glow font-semibold flex items-center gap-2 pt-1 text-xs sm:text-sm">
@@ -534,7 +534,7 @@ export default function Reports() {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-hairline/60 text-xs text-slate-300 leading-relaxed bg-panel-card/50 p-4 pl-5 rounded-xl border border-hairline/40">
+                <div className="pt-3 border-t border-hairline/60 text-xs text-slate-300 leading-relaxed glass-card/50 p-4 pl-5 rounded-xl border border-hairline/40">
                   <strong className="text-accent font-semibold">Engineered Protocol:</strong> {h.mitigation}
                 </div>
               </div>
@@ -568,14 +568,14 @@ export default function Reports() {
                     </span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-foreground mt-2 font-sans">{selectedWellProfile.well.name}</h2>
-                  <p className="text-xs text-secondary mt-1">
+                  <p className="text-xs text-text-muted mt-1">
                     {selectedWellProfile.well.field_name} · {selectedWellProfile.distanceKm.toFixed(1)} km proximity
                   </p>
                 </div>
 
                 <button
                   onClick={() => setSelectedWellProfile(null)}
-                  className="p-2 rounded-xl text-secondary hover:text-foreground hover:bg-panel-card transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-text-muted hover:text-foreground hover:glass-card transition-colors cursor-pointer"
                 >
                   <X size={20} />
                 </button>
@@ -584,8 +584,8 @@ export default function Reports() {
               {/* Drawer Body */}
               <div className="space-y-6 flex-1 pr-1">
                 {/* Executive Summary */}
-                <div className="p-6 pl-8 rounded-2xl bg-panel-card border border-hairline space-y-2.5 shadow-xs">
-                  <div className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                <div className="p-6 pl-8 rounded-2xl glass-card space-y-2.5 shadow-xs">
+                  <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
                     Executive Subsurface Summary
                   </div>
                   <div className="text-base font-semibold text-foreground">
@@ -598,22 +598,22 @@ export default function Reports() {
 
                 {/* Subsurface Metric Highlights */}
                 <div className="grid grid-cols-3 gap-3.5 text-xs">
-                  <div className="p-4 pl-5 rounded-xl bg-panel-card border border-hairline">
-                    <div className="text-[10px] text-secondary font-medium">Target Depth</div>
+                  <div className="p-4 pl-5 rounded-xl glass-card">
+                    <div className="text-[10px] text-text-muted font-medium">Target Depth</div>
                     <div className="font-mono font-bold text-foreground text-sm mt-0.5">{selectedWellProfile.well.total_depth_m}m MD</div>
                   </div>
-                  <div className="p-4 pl-5 rounded-xl bg-panel-card border border-hairline">
-                    <div className="text-[10px] text-secondary font-medium">Risk Probability</div>
+                  <div className="p-4 pl-5 rounded-xl glass-card">
+                    <div className="text-[10px] text-text-muted font-medium">Risk Probability</div>
                     <div className="font-mono font-bold text-danger text-sm mt-0.5">{selectedWellProfile.riskProbability}%</div>
                   </div>
-                  <div className="p-4 pl-5 rounded-xl bg-panel-card border border-hairline">
-                    <div className="text-[10px] text-secondary font-medium">Confidence</div>
+                  <div className="p-4 pl-5 rounded-xl glass-card">
+                    <div className="text-[10px] text-text-muted font-medium">Confidence</div>
                     <div className="font-mono font-bold text-accent text-sm mt-0.5">91.8%</div>
                   </div>
                 </div>
 
                 {/* Recommended Engineering Mitigations */}
-                <div className="p-6 pl-8 rounded-2xl bg-panel-card border border-hairline space-y-2.5 shadow-xs">
+                <div className="p-6 pl-8 rounded-2xl glass-card space-y-2.5 shadow-xs">
                   <div className="text-xs font-semibold text-primary-glow flex items-center gap-2">
                     <CheckCircle2 size={16} />
                     <span>Recommended Engineering Mitigations</span>
@@ -625,21 +625,21 @@ export default function Reports() {
 
                 {/* Offset Incident Catalog */}
                 <div className="space-y-3">
-                  <div className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                  <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
                     Correlated Offset Well Incidents ({selectedWellProfile.alerts.length})
                   </div>
                   {selectedWellProfile.alerts.length === 0 ? (
-                    <div className="p-5 pl-7 rounded-xl bg-panel-card border border-hairline text-center text-xs text-secondary">
+                    <div className="p-5 pl-7 rounded-xl glass-card text-center text-xs text-text-muted">
                       No direct incident alerts mapped for this well in database catalog.
                     </div>
                   ) : (
                     selectedWellProfile.alerts.map((alt) => (
-                      <div key={alt.id} className="p-4 pl-6 rounded-xl bg-panel-card border border-hairline text-xs space-y-1.5 shadow-xs">
+                      <div key={alt.id} className="p-4 pl-6 rounded-xl glass-card text-xs space-y-1.5 shadow-xs">
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-foreground">{alt.event_type}</span>
-                          <span className="font-mono text-secondary font-medium">{alt.matched_depth_m}m MD</span>
+                          <span className="font-mono text-text-muted font-medium">{alt.matched_depth_m}m MD</span>
                         </div>
-                        <p className="text-secondary text-[11px] leading-relaxed">{alt.message}</p>
+                        <p className="text-text-muted text-[11px] leading-relaxed">{alt.message}</p>
                       </div>
                     ))
                   )}
@@ -650,7 +650,7 @@ export default function Reports() {
               <div className="pt-5 border-t border-hairline flex items-center justify-between gap-4">
                 <button
                   onClick={() => setSelectedWellProfile(null)}
-                  className="px-5 py-2.5 rounded-xl bg-panel-card hover:bg-panel-hover text-foreground text-xs font-medium border border-hairline transition-colors"
+                  className="px-5 py-2.5 rounded-xl glass-card hover:bg-panel-hover text-foreground text-xs font-medium border border-hairline transition-colors"
                 >
                   Close
                 </button>
