@@ -5698,16 +5698,16 @@ export interface TrajectorySurveyPoint {
 
 export const BENCHMARK_EVALUATION = {
   "metric_name": "Macro F1 Score (Synthetic Benchmark)",
-  "measured_percentage": 85.9,
+  "measured_percentage": 86.1,
   "is_above_95": false,
-  "display_label": "NWIS Benchmark: 85.9% F1",
+  "display_label": "NWIS Benchmark: 86.1% F1",
   "detailed_metrics": {
-    "ner_precision": 0.825,
-    "ner_recall": 0.846,
-    "ner_f1": 0.835,
-    "event_classification_accuracy": 0.75,
+    "ner_precision": 0.810,
+    "ner_recall": 0.942,
+    "ner_f1": 0.871,
+    "event_classification_accuracy": 0.708,
     "risk_prediction_accuracy": 1.0,
-    "sample_count": 12
+    "sample_count": 34
   },
   "evaluation_context": "Evaluated on deterministic Upper Assam synthetic benchmark test split with cross-validation. Not operational OIL/eRTMAC data."
 }

@@ -5,16 +5,16 @@ Verifies all 16 features, OCR, NLP/NER, ML Risk, Geological Correlation, and PDF
 import sys
 import os
 
-# Add backend directory to sys.path
-sys.path.append(os.path.dirname(__file__))
+# Ensure backend root is on path for package imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from document_ingestion import DocumentIngestionPipeline
-from nlp_ner_pipeline import NLPNERPipeline
-from geological_correlator import GeologicalCorrelator
-from ml_risk_predictor import MLRiskPredictor
-from telemetry_provider import SyntheticTelemetryProvider, FutureERTMACProvider
-from pdf_generator import generate_risk_dossier_pdf
-from benchmark_evaluator import run_benchmark_evaluation
+from services.document_ingestion import DocumentIngestionPipeline
+from services.nlp_ner_pipeline import NLPNERPipeline
+from services.geological_correlator import GeologicalCorrelator
+from services.ml_risk_predictor import MLRiskPredictor
+from services.telemetry_provider import SyntheticTelemetryProvider, FutureERTMACProvider
+from services.pdf_generator import generate_risk_dossier_pdf
+from evaluation.benchmark_evaluator import run_benchmark_evaluation
 
 def test_all():
     print("=== RUNNING BOREX / NWIS INTELLIGENCE TEST SUITE ===")

@@ -102,21 +102,21 @@ export default function Telemetry() {
         <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-hairline">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-sans">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-grotesk">
                 Live Telemetry & Rig Sensor Stream
               </h1>
-              <span className="text-xs px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent font-medium flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-xs px-3 py-1 rounded-full bg-accent/8 border border-accent/20 text-accent font-medium flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span></span>
                 Real-Time Stream
               </span>
             </div>
-            <p className="text-sm text-secondary mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-sm text-text-muted mt-1.5 max-w-2xl leading-relaxed">
               Real-time subsurface sensor streams synthesized from Upper Assam Basin offset lithologies and real geomechanical pore pressure regimes.
             </p>
           </div>
 
           {/* Depth Controller Dock */}
-          <div className="flex items-center gap-4 bg-panel-card border border-hairline p-2.5 px-4 rounded-2xl shadow-sm">
+          <div className="flex items-center gap-4 glass p-2.5 px-4 rounded-2xl">
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
@@ -130,7 +130,7 @@ export default function Telemetry() {
               </button>
               <button
                 onClick={() => { setIsPlaying(false); setDepth(500) }}
-                className="p-2 rounded-xl text-secondary hover:text-foreground hover:bg-panel transition-colors"
+                className="p-2 rounded-xl text-text-muted hover:text-foreground hover:bg-panel transition-colors"
                 title="Reset depth to 500m"
               >
                 <RotateCcw size={15} />
@@ -141,9 +141,9 @@ export default function Telemetry() {
 
             <div className="flex items-center gap-3">
               <div className="text-xs">
-                <span className="text-secondary text-[11px]">Current Depth:</span>
+                <span className="text-text-muted text-[11px]">Current Depth:</span>
                 <div className="font-mono font-bold text-sm text-foreground">
-                  {depth.toFixed(1)} <span className="text-[11px] text-secondary font-normal">m MD</span>
+                  {depth.toFixed(1)} <span className="text-[11px] text-text-muted font-normal">m MD</span>
                 </div>
               </div>
               <input
@@ -162,7 +162,7 @@ export default function Telemetry() {
             <div className="h-6 w-[1px] bg-hairline" />
 
             <div className="pr-1 text-right">
-              <div className="text-[10px] text-secondary">FORMATION</div>
+              <div className="text-[10px] text-text-muted">FORMATION</div>
               <div className="text-xs font-semibold text-primary-glow truncate max-w-[150px]">
                 {currentFormation.name}
               </div>
@@ -171,10 +171,10 @@ export default function Telemetry() {
         </div>
 
       {/* ── Level 1: Operational Status Card (What is happening right now?) ── */}
-      <div className={`p-5 sm:p-6 rounded-2xl border transition-all ${
+      <div className={`p-5 sm:p-6 rounded-2xl border transition-all duration-500 ${
         isHighRisk
-          ? 'bg-danger/10 border-danger/30 text-slate-100 shadow-md'
-          : 'bg-panel-card border-hairline text-slate-200'
+          ? 'bg-danger/8 border-danger/20 text-slate-100 glow-danger'
+          : 'glass-card'
       }`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -190,7 +190,7 @@ export default function Telemetry() {
                 }`}>
                   {isHighRisk ? 'ATTENTION REQUIRED' : 'NOMINAL DRILLING ENVELOPE'}
                 </span>
-                <span className="text-xs text-secondary">Horizon: {currentFormation.name}</span>
+                <span className="text-xs text-text-muted">Horizon: {currentFormation.name}</span>
               </div>
               <div className="text-sm sm:text-base font-semibold text-foreground mt-1">
                 {telemetry?.active_warning
@@ -202,7 +202,7 @@ export default function Telemetry() {
 
           {primaryRisk && (
             <div className="text-right border-l border-hairline pl-5">
-              <div className="text-[11px] text-secondary">Predicted Hazard Likelihood</div>
+              <div className="text-[11px] text-text-muted">Predicted Hazard Likelihood</div>
               <div className="text-sm font-bold font-mono text-foreground flex items-center gap-2 justify-end mt-0.5">
                 <span className={primaryRisk.risk_class === 'CRITICAL' ? 'text-danger' : 'text-primary-glow'}>
                   {primaryRisk.risk_type}
@@ -218,59 +218,59 @@ export default function Telemetry() {
 
       {/* ── Level 2: 6 Primary Readable KPI Cards ── */}
       <div className="space-y-3">
-        <div className="text-xs font-semibold text-secondary uppercase tracking-wider">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
           Core Drilling Dynamics (Key Parameters)
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {/* 1. ROP */}
-          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl bg-panel-card border border-hairline hover:border-hairline-light transition-all flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between text-secondary mb-3">
+          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl stat-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-text-muted mb-3">
               <span className="text-xs font-semibold tracking-wide">ROP</span>
               <ArrowDownCircle size={18} className="text-primary-glow" />
             </div>
             <div>
               <div className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {(telemetry?.rop_m_h ?? telemetry?.ropMh ?? 16.0).toFixed(1)}
-                <span className="text-xs font-normal text-secondary ml-1">m/hr</span>
+                <span className="text-xs font-normal text-text-muted ml-1">m/hr</span>
               </div>
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-hairline/60 text-[11px]">
-                <span className="text-secondary">Safe: 10 - 25</span>
+                <span className="text-text-muted">Safe: 10 - 25</span>
                 <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">Normal</span>
               </div>
             </div>
           </div>
 
           {/* 2. WOB */}
-          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl bg-panel-card border border-hairline hover:border-hairline-light transition-all flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between text-secondary mb-3">
+          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl stat-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-text-muted mb-3">
               <span className="text-xs font-semibold tracking-wide">WOB</span>
               <Gauge size={18} className="text-primary-glow" />
             </div>
             <div>
               <div className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {(telemetry?.wob_klbf ?? telemetry?.wobKlbf ?? 28.0).toFixed(1)}
-                <span className="text-xs font-normal text-secondary ml-1">klbf</span>
+                <span className="text-xs font-normal text-text-muted ml-1">klbf</span>
               </div>
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-hairline/60 text-[11px]">
-                <span className="text-secondary">Safe: 20 - 35</span>
+                <span className="text-text-muted">Safe: 20 - 35</span>
                 <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">Normal</span>
               </div>
             </div>
           </div>
 
           {/* 3. Surface Torque */}
-          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl bg-panel-card border border-hairline hover:border-hairline-light transition-all flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between text-secondary mb-3">
+          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl stat-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-text-muted mb-3">
               <span className="text-xs font-semibold tracking-wide">Torque</span>
               <Zap size={18} className="text-primary-glow" />
             </div>
             <div>
               <div className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {(telemetry?.torque_kft_lb ?? telemetry?.torqueKftlb ?? 21.0).toFixed(1)}
-                <span className="text-xs font-normal text-secondary ml-1">kft-lb</span>
+                <span className="text-xs font-normal text-text-muted ml-1">kft-lb</span>
               </div>
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-hairline/60 text-[11px]">
-                <span className="text-secondary">Threshold: &lt; 26</span>
+                <span className="text-text-muted">Threshold: &lt; 26</span>
                 <span className={`px-2 py-0.5 rounded-full font-medium ${
                   (telemetry?.torque_kft_lb ?? 21.0) > 25 ? 'bg-danger/10 text-danger' : 'bg-accent/10 text-accent'
                 }`}>
@@ -281,54 +281,54 @@ export default function Telemetry() {
           </div>
 
           {/* 4. Rotary Speed (RPM) */}
-          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl bg-panel-card border border-hairline hover:border-hairline-light transition-all flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between text-secondary mb-3">
+          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl stat-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-text-muted mb-3">
               <span className="text-xs font-semibold tracking-wide">Rotary RPM</span>
               <RotateCw size={18} className="text-primary-glow" />
             </div>
             <div>
               <div className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {Math.round(telemetry?.rpm ?? 105)}
-                <span className="text-xs font-normal text-secondary ml-1">RPM</span>
+                <span className="text-xs font-normal text-text-muted ml-1">RPM</span>
               </div>
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-hairline/60 text-[11px]">
-                <span className="text-secondary">Range: 90 - 120</span>
+                <span className="text-text-muted">Range: 90 - 120</span>
                 <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">Optimal</span>
               </div>
             </div>
           </div>
 
           {/* 5. Standpipe Pressure (SPP) */}
-          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl bg-panel-card border border-hairline hover:border-hairline-light transition-all flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between text-secondary mb-3">
+          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl stat-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-text-muted mb-3">
               <span className="text-xs font-semibold tracking-wide">SPP</span>
               <Activity size={18} className="text-primary-glow" />
             </div>
             <div>
               <div className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {Math.round(telemetry?.standpipe_psi ?? telemetry?.standpipePsi ?? 2750)}
-                <span className="text-xs font-normal text-secondary ml-1">psi</span>
+                <span className="text-xs font-normal text-text-muted ml-1">psi</span>
               </div>
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-hairline/60 text-[11px]">
-                <span className="text-secondary">Safe: 2400-3100</span>
+                <span className="text-text-muted">Safe: 2400-3100</span>
                 <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">Normal</span>
               </div>
             </div>
           </div>
 
           {/* 6. Mud Flow Rate */}
-          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl bg-panel-card border border-hairline hover:border-hairline-light transition-all flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between text-secondary mb-3">
+          <div className="p-5 pl-6 sm:p-6 sm:pl-7 rounded-2xl stat-card flex flex-col justify-between">
+            <div className="flex items-center justify-between text-text-muted mb-3">
               <span className="text-xs font-semibold tracking-wide">Flow Rate</span>
               <Droplets size={18} className="text-primary-glow" />
             </div>
             <div>
               <div className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {Math.round(telemetry?.flow_rate_gpm ?? telemetry?.flowRateGpm ?? 620)}
-                <span className="text-xs font-normal text-secondary ml-1">gpm</span>
+                <span className="text-xs font-normal text-text-muted ml-1">gpm</span>
               </div>
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-hairline/60 text-[11px]">
-                <span className="text-secondary">Safe: 550-700</span>
+                <span className="text-text-muted">Safe: 550-700</span>
                 <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">Normal</span>
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function Telemetry() {
               <TrendingUp size={18} className="text-primary-glow" />
               <h3 className="font-sans font-bold text-base text-foreground">Subsurface Sensor Progression & Live Dynamics</h3>
             </div>
-            <p className="text-xs text-secondary mt-1">
+            <p className="text-xs text-text-muted mt-1">
               Multi-channel real-time parameter tracking correlated with formation depth window.
             </p>
           </div>
@@ -353,7 +353,7 @@ export default function Telemetry() {
             <button
               onClick={() => setActiveTab('trends')}
               className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                activeTab === 'trends' ? 'bg-panel-card text-primary-glow shadow-sm' : 'text-secondary hover:text-foreground'
+                activeTab === 'trends' ? 'bg-panel-card text-primary-glow shadow-sm' : 'text-text-muted hover:text-foreground'
               }`}
             >
               Drilling Dynamics & Torque
@@ -361,7 +361,7 @@ export default function Telemetry() {
             <button
               onClick={() => setActiveTab('rheology')}
               className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                activeTab === 'rheology' ? 'bg-panel-card text-primary-glow shadow-sm' : 'text-secondary hover:text-foreground'
+                activeTab === 'rheology' ? 'bg-panel-card text-primary-glow shadow-sm' : 'text-text-muted hover:text-foreground'
               }`}
             >
               Mud System & Pressure
@@ -423,12 +423,12 @@ export default function Telemetry() {
             <span className="font-semibold text-sm text-foreground">
               Engineering Diagnostics & Mud Rheology Specifications
             </span>
-            <span className="text-xs text-secondary font-mono">
+            <span className="text-xs text-text-muted font-mono">
               ({currentMud?.mud_type || 'KCL-Polymer Water-Based Mud'} · {currentMud?.mud_weight_sg || 1.18} SG)
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-secondary">
+          <div className="flex items-center gap-2 text-xs text-text-muted">
             <span>{showRawLogs ? 'Collapse details' : 'Expand details'}</span>
             {showRawLogs ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
@@ -446,19 +446,19 @@ export default function Telemetry() {
               {/* Detailed Mud Rheology Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                 <div className="p-4 rounded-xl bg-panel border border-hairline">
-                  <div className="text-[11px] text-secondary">Mud System Type</div>
+                  <div className="text-[11px] text-text-muted">Mud System Type</div>
                   <div className="font-semibold text-foreground mt-1 text-sm">{currentMud?.mud_type || 'KCL-Polymer WBM'}</div>
                 </div>
                 <div className="p-4 rounded-xl bg-panel border border-hairline">
-                  <div className="text-[11px] text-secondary">Mud Density</div>
+                  <div className="text-[11px] text-text-muted">Mud Density</div>
                   <div className="font-mono font-bold text-foreground mt-1 text-sm">{currentMud?.mud_weight_sg || 1.18} SG</div>
                 </div>
                 <div className="p-4 rounded-xl bg-panel border border-hairline">
-                  <div className="text-[11px] text-secondary">Plastic Viscosity (PV)</div>
+                  <div className="text-[11px] text-text-muted">Plastic Viscosity (PV)</div>
                   <div className="font-mono font-bold text-foreground mt-1 text-sm">{currentMud?.plastic_viscosity_cp || 18} cP</div>
                 </div>
                 <div className="p-4 rounded-xl bg-panel border border-hairline">
-                  <div className="text-[11px] text-secondary">Yield Point (YP)</div>
+                  <div className="text-[11px] text-text-muted">Yield Point (YP)</div>
                   <div className="font-mono font-bold text-foreground mt-1 text-sm">{currentMud?.yield_point_lbf_100sqft || 22} lb/100ft²</div>
                 </div>
               </div>
@@ -466,7 +466,7 @@ export default function Telemetry() {
               {/* Raw Sensor Readings Table */}
               <div className="overflow-x-auto rounded-xl border border-hairline">
                 <table className="w-full text-left font-mono text-xs">
-                  <thead className="bg-panel text-secondary border-b border-hairline text-[11px]">
+                  <thead className="bg-panel text-text-muted border-b border-hairline text-[11px]">
                     <tr>
                       <th className="p-3.5">TIMESTAMP</th>
                       <th className="p-3.5">DEPTH (m)</th>
@@ -481,7 +481,7 @@ export default function Telemetry() {
                   <tbody className="divide-y divide-hairline text-slate-300">
                     {readingsHistory.slice(-5).reverse().map((r, i) => (
                       <tr key={i} className="hover:bg-panel/40">
-                        <td className="p-3.5 text-secondary">{r.time}</td>
+                        <td className="p-3.5 text-text-muted">{r.time}</td>
                         <td className="p-3.5 text-foreground font-bold">{r.depth.toFixed(1)}</td>
                         <td className="p-3.5">{r.rop.toFixed(1)}</td>
                         <td className="p-3.5">{r.wob.toFixed(1)}</td>

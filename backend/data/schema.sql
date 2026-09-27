@@ -12,8 +12,10 @@ create table if not exists wells (
   lon             float8 not null,
   field_name      text,
   operator        text,
+  basin           text,
   spud_date       timestamptz,
-  total_depth_m   float8
+  total_depth_m   float8,
+  status          text default 'historical'
 );
 
 -- Historical drilling events extracted from DDRs
@@ -24,6 +26,7 @@ create table if not exists drilling_reports (
   depth_m         float8,
   formation       text,
   event_type      text,
+  severity        text,
   notes           text,
   source_document text
 );
@@ -33,6 +36,7 @@ create table if not exists active_well_progress (
   id              bigint generated always as identity primary key,
   well_id         text references wells(id) on delete cascade,
   current_depth_m float8,
+  rop_m_hr        float8,
   timestamp       timestamptz
 );
 
@@ -45,6 +49,7 @@ create table if not exists risk_alerts (
   event_type      text,
   distance_km     float8,
   severity        text,
+  composite_score float8,
   message         text,
   created_at      timestamptz default now()
 );
@@ -68,8 +73,11 @@ create policy "public read active_well_progress"
 create policy "public read risk_alerts"
   on risk_alerts for select using (true);
 
--- Optional: Index for performance
+-- Performance indices
 create index if not exists idx_drilling_reports_well_id  on drilling_reports(well_id);
 create index if not exists idx_drilling_reports_depth_m  on drilling_reports(depth_m);
+create index if not exists idx_drilling_reports_event    on drilling_reports(event_type);
 create index if not exists idx_risk_alerts_active_well   on risk_alerts(active_well_id);
+create index if not exists idx_risk_alerts_severity      on risk_alerts(severity);
 create index if not exists idx_progress_well_id          on active_well_progress(well_id);
+create index if not exists idx_wells_basin               on wells(field_name);

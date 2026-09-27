@@ -193,7 +193,7 @@ export default function KnowledgeRepo() {
                 NLP Knowledge Base
               </span>
             </div>
-            <p className="text-sm text-secondary mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-sm text-text-muted mt-1.5 max-w-2xl leading-relaxed">
               Automated entity extraction and incident distillation from historical Assam Basin daily drilling logs, EOWRs, and well control audits.
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function KnowledgeRepo() {
           <button
             onClick={handleSimulateNLP}
             disabled={isProcessingNLP}
-            className="flex items-center gap-2 px-5 py-2.5 bg-panel-card hover:bg-panel-hover border border-hairline text-foreground rounded-xl text-xs font-medium transition-colors shadow-sm cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 glass-card hover:bg-panel-hover border border-hairline text-foreground rounded-xl text-xs font-medium transition-colors shadow-sm cursor-pointer"
           >
             {isProcessingNLP ? (
               <>
@@ -218,12 +218,12 @@ export default function KnowledgeRepo() {
         {/* ── Main Two-Column Document Intelligence Workspace ── */}
         <div className="flex flex-col lg:flex-row gap-8 items-stretch">
           {/* Left Column: Document Browser (Enlarged Width & Ample Padding) */}
-          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col bg-panel-card border border-hairline rounded-2xl overflow-hidden shrink-0 shadow-sm">
+          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col glass-card rounded-2xl overflow-hidden shrink-0 shadow-sm">
             {/* Search Box & Filters */}
             <div className="p-6 border-b border-hairline space-y-4">
               <div className="relative flex items-center">
                 {/* Search Icon with Guaranteed Separation */}
-                <div className="absolute left-4 pointer-events-none flex items-center justify-center text-secondary">
+                <div className="absolute left-4 pointer-events-none flex items-center justify-center text-text-muted">
                   <Search size={16} />
                 </div>
                 <input
@@ -232,7 +232,7 @@ export default function KnowledgeRepo() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ paddingLeft: '3.25rem' }}
-                  className="w-full bg-panel border border-hairline rounded-xl pr-4 py-2.5 text-xs sm:text-sm text-foreground placeholder:text-secondary/60 outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all shadow-inner"
+                  className="w-full bg-panel border border-hairline rounded-xl pr-4 py-2.5 text-xs sm:text-sm text-foreground placeholder:text-text-muted/60 outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all shadow-inner"
                 />
               </div>
 
@@ -245,7 +245,7 @@ export default function KnowledgeRepo() {
                     className={`text-[11px] px-3.5 py-1.5 rounded-lg shrink-0 font-medium transition-all ${
                       selectedCategory === cat
                         ? 'bg-primary text-white shadow-xs'
-                        : 'text-secondary bg-panel hover:text-foreground hover:bg-panel-hover'
+                        : 'text-text-muted glass-subtle hover:text-foreground hover:bg-white/[0.06]'
                     }`}
                   >
                     {cat === 'Daily Drilling Report' ? 'DDR' : cat === 'Incident Investigation Report' ? 'Incident' : cat === 'End of Well Report' ? 'EOWR' : 'All'}
@@ -265,7 +265,7 @@ export default function KnowledgeRepo() {
                     className={`p-5 pl-7 rounded-xl cursor-pointer transition-all border relative overflow-hidden ${
                       isSelected
                         ? 'bg-panel-hover border-primary-glow/60 shadow-md ring-1 ring-primary-glow/30 border-l-4 border-l-primary-glow'
-                        : 'border-hairline bg-panel hover:bg-panel-card hover:border-hairline-light'
+                        : 'border-hairline bg-panel hover:glass-card hover:border-hairline-light'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -279,7 +279,7 @@ export default function KnowledgeRepo() {
                     <div className="text-xs text-primary-glow font-semibold mt-2 truncate">
                       {doc.event}
                     </div>
-                    <div className="flex items-center justify-between text-xs text-secondary mt-3 pt-2.5 border-t border-hairline/60">
+                    <div className="flex items-center justify-between text-xs text-text-muted mt-3 pt-2.5 border-t border-hairline/60">
                       <span className="font-medium">{doc.well}</span>
                       <span className="font-mono text-foreground font-semibold">{doc.depth}m MD</span>
                     </div>
@@ -290,7 +290,7 @@ export default function KnowledgeRepo() {
           </div>
 
           {/* Right Column: Structured Document Intelligence View */}
-          <div className="flex-1 w-full flex flex-col bg-panel-card border border-hairline rounded-2xl p-7 sm:p-9 space-y-8 shadow-sm overflow-hidden min-h-[640px]">
+          <div className="flex-1 w-full flex flex-col glass-card rounded-2xl p-7 sm:p-9 space-y-8 shadow-sm overflow-hidden min-h-[640px]">
             {/* Header of Active Document */}
             <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-hairline">
               <div className="space-y-2.5">
@@ -298,12 +298,12 @@ export default function KnowledgeRepo() {
                   <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary-glow">
                     {selectedDoc.type}
                   </span>
-                  <span className="text-xs text-secondary font-mono">
+                  <span className="text-xs text-text-muted font-mono">
                     Extraction Confidence: <strong className="text-accent">{(selectedDoc.confidence * 100).toFixed(0)}% Macro-F1</strong>
                   </span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-sans">{selectedDoc.name}</h2>
-                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-secondary">
+                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-text-muted">
                   <span>Well: <strong className="text-foreground">{selectedDoc.well}</strong></span>
                   <span>·</span>
                   <span>Depth: <strong className="text-foreground font-mono">{selectedDoc.depth}m MD</strong></span>
@@ -349,22 +349,22 @@ export default function KnowledgeRepo() {
                   <Sparkles size={16} className="text-accent" />
                   <span>Extracted NER Intelligence Entities</span>
                 </div>
-                <span className="text-[11px] text-secondary font-mono">Assam LithoNER Grounded</span>
+                <span className="text-[11px] text-text-muted font-mono">Assam LithoNER Grounded</span>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 {selectedDoc.entities.map((ent, i) => (
                   <div
                     key={i}
-                    className="px-4.5 py-2.5 rounded-xl bg-panel-card border border-hairline text-xs flex items-center gap-2.5 shadow-xs"
+                    className="px-4.5 py-2.5 rounded-xl glass-card text-xs flex items-center gap-2.5 shadow-xs"
                   >
-                    <span className="text-[10px] text-secondary font-mono uppercase font-semibold">{ent.label}:</span>
+                    <span className="text-[10px] text-text-muted font-mono uppercase font-semibold">{ent.label}:</span>
                     <span className="font-semibold text-foreground">{ent.value}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="p-5 sm:p-6 pl-7 sm:pl-8 rounded-xl bg-panel-card border border-hairline/80 space-y-2">
+              <div className="p-5 sm:p-6 pl-7 sm:pl-8 rounded-xl glass-card/80 space-y-2">
                 <div className="text-xs font-semibold text-accent flex items-center gap-2">
                   <CheckCircle2 size={16} />
                   <span>Executed Mitigation Action</span>
@@ -381,11 +381,11 @@ export default function KnowledgeRepo() {
                 onClick={() => setShowRawText(!showRawText)}
                 className="w-full p-5 pl-7 sm:pl-8 flex items-center justify-between text-left hover:bg-panel-hover transition-colors cursor-pointer"
               >
-                <span className="text-xs sm:text-sm font-semibold text-secondary flex items-center gap-2.5">
+                <span className="text-xs sm:text-sm font-semibold text-text-muted flex items-center gap-2.5">
                   <FileText size={16} className="text-primary-glow" />
                   Original Scanned Text & OCR Raw Output
                 </span>
-                <div className="flex items-center gap-2 text-xs text-secondary font-medium">
+                <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
                   <span>{showRawText ? 'Hide' : 'Show'} raw report</span>
                   {showRawText ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
@@ -409,16 +409,16 @@ export default function KnowledgeRepo() {
         </div>
 
         {/* ── Subsurface Knowledge Base Corpus & Correlation Matrix ── */}
-        <div className="bg-panel-card border border-hairline rounded-2xl p-7 sm:p-8 space-y-5 shadow-sm">
+        <div className="glass-card rounded-2xl p-7 sm:p-8 space-y-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div>
               <div className="flex items-center gap-2.5">
                 <Database size={18} className="text-primary-glow" />
-                <h3 className="font-sans font-bold text-base text-foreground">
+                <h3 className="font-grotesk font-bold text-base text-foreground">
                   Assam Basin Offset Incident Corpus & Lithological Index
                 </h3>
               </div>
-              <p className="text-xs text-secondary mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 Cataloged historical offset well files indexed into the eRTMAC-NWIS unstructured document retrieval pipeline.
               </p>
             </div>
@@ -429,7 +429,7 @@ export default function KnowledgeRepo() {
 
           <div className="overflow-x-auto rounded-xl border border-hairline">
             <table className="w-full text-left font-mono text-xs">
-              <thead className="bg-panel text-secondary border-b border-hairline text-[11px]">
+              <thead className="bg-panel text-text-muted border-b border-hairline text-[11px]">
                 <tr>
                   <th className="p-4 pl-6">DOCUMENT ID / FILE</th>
                   <th className="p-4">WELL</th>
@@ -457,7 +457,7 @@ export default function KnowledgeRepo() {
                       </td>
                       <td className="p-4 font-mono text-xs text-slate-200">{doc.well}</td>
                       <td className="p-4 text-primary-glow font-medium">{doc.event}</td>
-                      <td className="p-4 text-secondary">{doc.formation}</td>
+                      <td className="p-4 text-text-muted">{doc.formation}</td>
                       <td className="p-4 font-mono text-xs font-bold text-foreground">{doc.depth}m MD</td>
                       <td className="p-4">
                         <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
@@ -475,7 +475,7 @@ export default function KnowledgeRepo() {
                           className={`text-xs px-3 py-1 rounded-lg border transition-colors inline-flex items-center gap-1 cursor-pointer ${
                             isSelected
                               ? 'bg-primary text-white border-primary'
-                              : 'bg-panel border-hairline text-secondary hover:text-foreground hover:bg-panel-hover'
+                              : 'glass text-text-muted hover:text-foreground hover:bg-white/[0.06]'
                           }`}
                         >
                           {isSelected ? 'Active' : 'Inspect'}
