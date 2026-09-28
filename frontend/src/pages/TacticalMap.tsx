@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup, Circle, useMap } from 'react-leaflet'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
+import { MapContainer, TileLayer, CircleMarker, Popup, Circle, useMap, Polyline, Marker, Tooltip } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -10,6 +11,7 @@ import {
   X,
   Target,
   RotateCcw,
+  Layers,
   CheckCircle2,
   Key,
 } from 'lucide-react'
@@ -106,7 +108,11 @@ export default function TacticalMap() {
   const [searchRadiusKm, setSearchRadiusKm] = useState(80)
   const [activeBasemap, setActiveBasemap] = useState<BasemapKey>('DARK')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+    const [error, setError] = useState<string | null>(null)
+  const [showFaults, setShowFaults] = useState(true)
+  const [showTrajectories, setShowTrajectories] = useState(true)
+  const [showPressure, setShowPressure] = useState(true)
+  const [showProximity, setShowProximity] = useState(true)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Load Data ──
@@ -193,6 +199,52 @@ export default function TacticalMap() {
     }
     return { color: '#0EA5E9', fillColor: '#0EA5E9', radius: 6, weight: 1.5, fillOpacity: 0.75 }
   }
+
+  
+  // ── Custom Markers & Overlays ──
+  const activeWellIcon = L.divIcon({
+    className: 'bg-transparent border-none',
+    html: `<div class="relative w-16 h-16 flex items-center justify-center">
+      <div class="absolute inset-0 rounded-full border-2 border-[#10B981]/40 radar-sweep"></div>
+      <div class="absolute w-8 h-8 rounded-full bg-[#10B981]/20 animate-pulse"></div>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" class="relative z-10 drop-shadow-[0_0_8px_#10B981]">
+         <path d="M12 2v20M8 22h8M6 10l6-8 6 8M4 14l8-12 8 12" />
+      </svg>
+    </div>`,
+    iconSize: [64, 64],
+    iconAnchor: [32, 32],
+  })
+
+  const getOffsetIcon = (isRisky: boolean) => L.divIcon({
+    className: 'bg-transparent border-none',
+    html: `<div class="relative w-8 h-8 flex items-center justify-center">
+      ${isRisky ? '<div class="absolute inset-0 rounded-full bg-[#F43F5E]/30 animate-ping" style="animation-duration: 2s;"></div>' : ''}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${isRisky ? '#F43F5E' : '#38BDF8'}" stroke-width="2.5" class="relative z-10 ${isRisky ? 'drop-shadow-[0_0_5px_#F43F5E]' : 'drop-shadow-[0_0_3px_#38BDF8]'}">
+         <circle cx="12" cy="12" r="8" />
+         <path d="M12 4v16M4 12h16" />
+      </svg>
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  })
+
+  const getTrajectory = (well: Well) => {
+     const hash = (well.lat * well.lon * 10000) % 360;
+     const angle = hash * (Math.PI / 180);
+     const lengthKm = ((well.total_depth_m || 2000) / 1000) * 0.8;
+     const dx = Math.cos(angle) * lengthKm;
+     const dy = Math.sin(angle) * lengthKm;
+     const destLat = well.lat + (dy / 111);
+     const destLon = well.lon + (dx / (111 * Math.cos(well.lat * Math.PI/180)));
+     return [[well.lat, well.lon] as [number, number], [well.lat + (dy/222), well.lon + (dx/222)] as [number, number], [destLat, destLon] as [number, number]];
+  }
+
+  const FAULTS = [
+    { name: 'Naga Thrust Front', coords: [[27.4, 95.2], [27.35, 95.3], [27.25, 95.4]] as [number, number][], color: '#F43F5E' },
+    { name: 'Jorhat Fault', coords: [[27.25, 95.1], [27.3, 95.35]] as [number, number][], color: '#F59E0B' },
+    { name: 'Mikir Hills Lineament', coords: [[27.45, 95.35], [27.3, 95.45]] as [number, number][], color: '#F59E0B' },
+    { name: 'Disang Thrust', coords: [[27.2, 95.25], [27.3, 95.5]] as [number, number][], color: '#F43F5E' },
+  ]
 
   const center: [number, number] = activeWell ? [activeWell.lat, activeWell.lon] : [27.3250, 95.3180]
   const currentProvider = BASEMAP_PROVIDERS[activeBasemap]
@@ -312,7 +364,7 @@ export default function TacticalMap() {
             />
 
             {/* Proximity Perimeter Circle */}
-            {activeWell && (
+            {showProximity && activeWell && (
               <>
                 <Circle
                   center={[activeWell.lat, activeWell.lon]}
@@ -337,88 +389,103 @@ export default function TacticalMap() {
               </>
             )}
 
-            {/* Offset Wells */}
+            {/* Structural Fault Lines */}
+            {showFaults && FAULTS.map((fault, i) => (
+              <Polyline key={`fault-${i}`} positions={fault.coords} pathOptions={{ color: fault.color, weight: 3, dashArray: '10 15', opacity: 0.4 }}>
+                <Tooltip sticky className="glass-panel text-xs font-mono">{fault.name}</Tooltip>
+              </Polyline>
+            ))}
+
+            {/* Pore Pressure Risk Heatmap */}
+            {showPressure && activeWell && [1, 2, 3, 4, 5].map(idx => (
+              <Circle
+                key={`pressure-${idx}`}
+                center={[activeWell.lat, activeWell.lon]}
+                radius={idx * 1800}
+                pathOptions={{
+                  color: idx <= 2 ? '#F43F5E' : idx === 3 ? '#F59E0B' : idx === 4 ? '#EAB308' : '#10B981',
+                  fillColor: idx <= 2 ? '#F43F5E' : idx === 3 ? '#F59E0B' : idx === 4 ? '#EAB308' : '#10B981',
+                  fillOpacity: 0.15 / idx,
+                  stroke: false
+                }}
+              />
+            ))}
+
+                        {/* Offset Wells */}
             {offsetWellsInRadius.map((w) => {
               const distance = activeWell ? haversineKm(activeWell.lat, activeWell.lon, w.lat, w.lon) : 0
               const isRisky = riskyWellIds.has(w.id)
-              const markerStyle = getWellMarkerStyle(w)
               const wellAlerts = visibleAlerts.filter((a) => a.nearby_well_id === w.id)
+              const trajectory = getTrajectory(w)
 
               return (
-                <CircleMarker
-                  key={w.id}
-                  center={[w.lat, w.lon]}
-                  radius={markerStyle.radius}
-                  eventHandlers={{
-                    click: () => setSelectedWell(w),
-                  }}
-                  pathOptions={{
-                    color: markerStyle.color,
-                    fillColor: markerStyle.fillColor,
-                    fillOpacity: markerStyle.fillOpacity,
-                    weight: markerStyle.weight,
-                  }}
-                >
-                  <Popup className="nwis-popup">
-                    <div className="p-1 min-w-[220px]">
-                      <div className="flex items-center justify-between pb-1.5 border-b border-hairline mb-2">
-                        <span className="font-bold text-xs text-primary-glow font-sans">{w.name}</span>
-                        <span className="text-[10px] text-text-muted font-mono">OFFSET</span>
-                      </div>
-                      <div className="text-xs text-slate-300 space-y-1">
-                        <div>Proximity: <strong className="text-foreground">{distance.toFixed(1)} km</strong></div>
-                        <div>Total Depth: <span className="font-mono">{w.total_depth_m}m</span></div>
-                        <div className="text-[11px] text-text-muted">{w.field_name}</div>
-                      </div>
-                      {isRisky && (
-                        <div className="mt-2.5 p-2 rounded-lg bg-danger/10 border border-danger/30 text-danger text-[11px] font-medium flex items-center gap-1.5">
-                          <AlertTriangle size={13} className="shrink-0" />
-                          <span>{wellAlerts.length} correlated hazard(s) at current horizon</span>
+                <React.Fragment key={w.id}>
+                  {showTrajectories && (
+                    <Polyline
+                      positions={trajectory}
+                      pathOptions={{
+                        color: isRisky ? '#F59E0B' : '#38BDF8',
+                        weight: 2,
+                        dashArray: '4 8',
+                        opacity: 0.6
+                      }}
+                    />
+                  )}
+                  <Marker
+                    position={[w.lat, w.lon]}
+                    icon={getOffsetIcon(isRisky)}
+                    eventHandlers={{ click: () => setSelectedWell(w) }}
+                  >
+                    <Popup className="nwis-popup">
+                      <div className="p-1 min-w-[220px]">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-hairline mb-2">
+                          <span className="font-bold text-xs text-primary-glow font-sans">{w.name}</span>
+                          <span className="text-[10px] text-text-muted font-mono">OFFSET</span>
                         </div>
-                      )}
-                      <div className="mt-2 text-right">
-                        <button
-                          onClick={() => setSelectedWell(w)}
-                          className="text-[10px] text-primary-glow hover:underline font-medium"
-                        >
-                          View Full Intelligence →
-                        </button>
+                        <div className="text-xs text-slate-300 space-y-1">
+                          <div>Proximity: <strong className="text-foreground">{distance.toFixed(1)} km</strong></div>
+                          <div>Total Depth: <span className="font-mono">{w.total_depth_m}m</span></div>
+                          <div className="text-[11px] text-text-muted">{w.field_name}</div>
+                        </div>
+                        {isRisky && (
+                          <div className="mt-2.5 p-2 rounded-lg bg-danger/10 border border-danger/30 text-danger text-[11px] font-medium flex items-center gap-1.5">
+                            <AlertTriangle size={13} className="shrink-0" />
+                            <span>{wellAlerts.length} correlated hazard(s) at current horizon</span>
+                          </div>
+                        )}
+                        <div className="mt-2 text-right">
+                          <button
+                            onClick={() => setSelectedWell(w)}
+                            className="text-[10px] text-primary-glow hover:underline font-medium"
+                          >
+                            View Full Intelligence →
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </Popup>
-                </CircleMarker>
+                    </Popup>
+                  </Marker>
+                </React.Fragment>
               )
             })}
-
-            {/* Active Drilling Well Marker */}
+                        {/* Active Drilling Well Marker */}
             {activeWell && (
-              <>
-                <CircleMarker
-                  center={[activeWell.lat, activeWell.lon]}
-                  radius={18}
-                  pathOptions={{ color: '#10B981', fillColor: '#10B981', fillOpacity: 0.18, weight: 1.5 }}
-                />
-                <CircleMarker
-                  center={[activeWell.lat, activeWell.lon]}
-                  radius={9}
-                  eventHandlers={{
-                    click: () => setSelectedWell(activeWell),
-                  }}
-                  pathOptions={{ color: '#FFFFFF', fillColor: '#10B981', fillOpacity: 1, weight: 2.5 }}
-                >
-                  <Popup className="nwis-popup">
-                    <div className="p-1 min-w-[200px]">
-                      <div className="flex items-center gap-2 font-bold text-xs text-accent mb-1">
-                        <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
-                        ACTIVE DRILLING TARGET
-                      </div>
-                      <div className="text-sm font-bold text-foreground">{activeWell.name}</div>
-                      <div className="text-xs text-text-muted mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
-                      <div className="text-xs text-text-muted">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
+              <Marker
+                position={[activeWell.lat, activeWell.lon]}
+                icon={activeWellIcon}
+                eventHandlers={{ click: () => setSelectedWell(activeWell) }}
+              >
+                <Popup className="nwis-popup">
+                  <div className="p-1 min-w-[200px]">
+                    <div className="flex items-center gap-2 font-bold text-xs text-accent mb-1">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                      ACTIVE DRILLING TARGET
                     </div>
-                  </Popup>
-                </CircleMarker>
-              </>
+                    <div className="text-sm font-bold text-foreground">{activeWell.name}</div>
+                    <div className="text-xs text-text-muted mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
+                    <div className="text-xs text-text-muted">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
+                  </div>
+                </Popup>
+              </Marker>
             )}
           </MapContainer>
         )}
@@ -529,6 +596,30 @@ export default function TacticalMap() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Floating Layer Control Panel ── */}
+      <div className="absolute bottom-28 left-5 sm:bottom-28 sm:left-6 z-[1000] glass px-4 py-3 rounded-2xl shadow-xl flex flex-col gap-2.5 pointer-events-auto w-48">
+        <div className="text-[10px] text-text-muted font-mono uppercase tracking-wider mb-1 flex items-center gap-1.5 border-b border-hairline pb-2">
+          <Layers size={12} className="text-primary-glow" /> 
+          Tactical Layers
+        </div>
+        {[
+          { label: 'Fault Lines', state: showFaults, set: setShowFaults },
+          { label: 'Trajectories', state: showTrajectories, set: setShowTrajectories },
+          { label: 'Pore Pressure', state: showPressure, set: setShowPressure },
+          { label: 'Proximity Grid', state: showProximity, set: setShowProximity }
+        ].map(l => (
+          <label key={l.label} className="flex items-center justify-between cursor-pointer group">
+            <span className="text-xs text-foreground font-medium group-hover:text-primary-glow transition-colors">{l.label}</span>
+            <input 
+              type="checkbox" 
+              checked={l.state} 
+              onChange={e => l.set(e.target.checked)} 
+              className="accent-primary w-3.5 h-3.5 cursor-pointer rounded-sm bg-panel border-hairline"
+            />
+          </label>
+        ))}
+      </div>
 
       {/* ── Sleek Bottom Horizon Scrubber & Depth Control Dock ── */}
       <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 z-[1000] flex justify-center pointer-events-none">

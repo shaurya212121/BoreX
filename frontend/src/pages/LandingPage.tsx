@@ -9,12 +9,12 @@ import { useLenis } from '../hooks/useAnimations'
 
 // ─── Seismic Strata Scene ────────────────────────────────────────────────
 const STRATA_LAYERS = [
-  { y: 1.8,  h: 0.5,  color: '#1A102A' },
-  { y: 1.2,  h: 0.6,  color: '#150D22' },
-  { y: 0.4,  h: 0.7,  color: '#100A1A' },
-  { y: -0.4, h: 0.7,  color: '#0B0612' },
-  { y: -1.2, h: 0.7,  color: '#08040E' },
-  { y: -2.0, h: 0.7,  color: '#040206' },
+  { y: 1.8,  h: 0.5,  color: '#3A2566' },
+  { y: 1.2,  h: 0.6,  color: '#2E1D54' },
+  { y: 0.4,  h: 0.7,  color: '#241644' },
+  { y: -0.4, h: 0.7,  color: '#190E33' },
+  { y: -1.2, h: 0.7,  color: '#100822' },
+  { y: -2.0, h: 0.7,  color: '#080311' },
 ]
 
 function StrataLayer({ y, h, color }: { y: number; h: number; color: string }) {
@@ -23,9 +23,9 @@ function StrataLayer({ y, h, color }: { y: number; h: number; color: string }) {
       {/* Tapered geometry for a cooler look, or just standard box with better lighting */}
       <boxGeometry args={[10, h - 0.1, 4]} />
       {/* Glossy material so it catches the directional light */}
-      <meshStandardMaterial color={color} roughness={0.4} metalness={0.6} />
+      <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
       {/* Glowing sonar edges */}
-      <Edges linewidth={1.5} threshold={15} color="#3E2563" />
+      <Edges linewidth={2} threshold={15} color="#A775FF" />
     </mesh>
   )
 }
@@ -97,16 +97,19 @@ const FEATURES = [
     icon: <Globe size={20} />,
     title: 'Geospatial Intelligence',
     desc: 'Real-time offset well proximity correlation across the Upper Assam Basin using Haversine geometry.',
+    link: '/app/map',
   },
   {
     icon: <Shield size={20} />,
     title: 'Predictive Risk Engine',
     desc: 'ML-powered subsurface hazard prediction matching real-time depth against historical incident catalogs.',
+    link: '/app/reports',
   },
   {
     icon: <Zap size={20} />,
     title: 'Live Telemetry Streams',
     desc: 'Synthetic telemetry simulation calibrated for eRTMAC-ready sensor integration and real-time monitoring.',
+    link: '/app/telemetry',
   },
 ]
 
@@ -260,14 +263,14 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ SECTION 2: Feature Cards ═══ */}
-      <section className="relative z-10 py-32 px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative z-10 py-32 px-6 w-full flex justify-center">
+        <div className="max-w-7xl w-full mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-20"
+            className="flex flex-col items-center justify-center text-center w-full mb-20"
           >
             <span className="font-mono text-[11px] text-primary tracking-[0.3em] uppercase mb-4 block">
               Core Capabilities
@@ -278,7 +281,7 @@ export default function LandingPage() {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
             {FEATURES.map((feat, i) => (
               <motion.div
                 key={feat.title}
@@ -286,12 +289,13 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.6, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                className="gradient-border p-8 rounded-2xl group cursor-default"
+                onClick={() => navigate(feat.link)}
+                className="gradient-border p-8 rounded-2xl group cursor-pointer hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(56,189,248,0.15)] transition-all duration-300"
               >
-                <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary-glow mb-5 group-hover:animate-pulse-glow transition-all">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary-glow mb-5 group-hover:bg-primary-glow group-hover:text-black group-hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all duration-300">
                   {feat.icon}
                 </div>
-                <h3 className="font-grotesk text-lg font-semibold text-foreground mb-2 tracking-tight">
+                <h3 className="font-grotesk text-lg font-semibold text-foreground mb-2 tracking-tight group-hover:text-primary-glow transition-colors">
                   {feat.title}
                 </h3>
                 <p className="text-sm text-text-muted leading-relaxed">
@@ -307,11 +311,11 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex justify-center mt-16"
+            className="flex justify-center mt-24 pb-12 w-full"
           >
             <button
               onClick={() => navigate('/app/map')}
-              className="btn-glass font-mono text-xs tracking-widest uppercase"
+              className="btn-glass font-mono text-xs tracking-widest uppercase hover:text-primary-glow hover:border-primary-glow/50 transition-all duration-300"
             >
               Enter Command Center →
             </button>
