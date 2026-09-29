@@ -361,7 +361,7 @@ export default function TacticalMap() {
         ) : error ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-danger p-6 text-center" style={{ background: '#050508' }}>
             <AlertTriangle size={36} />
-            <div className="font-grotesk font-semibold text-sm">Map Initialization Error</div>
+            <div className="font-sans font-semibold text-sm">Map Initialization Error</div>
             <div className="text-xs text-text-muted max-w-sm">{error}</div>
           </div>
         ) : (

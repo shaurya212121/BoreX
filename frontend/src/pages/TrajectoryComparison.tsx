@@ -88,7 +88,7 @@ function Trajectory3DCanvas({
         ctx.stroke()
 
         ctx.fillStyle = 'rgba(148, 163, 184, 0.5)'
-        ctx.font = '11px JetBrains Mono, monospace'
+        ctx.font = '11px "IBM Plex Mono", monospace'
         ctx.fillText(h.name, p2.x + 10, p2.y)
       })
 
@@ -437,7 +437,7 @@ export default function TrajectoryComparison() {
         <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div>
-              <h3 className="font-grotesk font-bold text-base text-foreground">Anti-Collision Survey Interval Log</h3>
+              <h3 className="font-sans font-semibold text-base text-foreground">Anti-Collision Survey Interval Log</h3>
               <p className="text-xs text-text-muted mt-1">
                 Comparative 3D Euclidean distance and ellipse of uncertainty clearance across active survey stations.
               </p>

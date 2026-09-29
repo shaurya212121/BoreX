@@ -89,7 +89,7 @@ export default function DashboardLayout() {
               </div>
               <div>
                 <div className="font-grotesk font-bold text-sm tracking-wide text-foreground flex items-center gap-1.5">
-                  Bore<span className="text-gradient font-extrabold">X</span> <span className="text-primary-glow font-extrabold">NWIS</span>
+                  Bore<span className="text-gradient font-bold">X</span> <span className="text-primary-glow font-bold">NWIS</span>
                 </div>
                 <div className="text-[9px] text-text-muted font-medium tracking-[0.15em] uppercase">
                   Nearby Wells Intelligence
@@ -285,7 +285,7 @@ export default function DashboardLayout() {
                   <ShieldCheck size={22} />
                 </div>
                 <div>
-                  <h3 className="font-grotesk font-bold text-base text-foreground">NWIS Benchmark Evaluation</h3>
+                  <h3 className="font-sans font-semibold text-base text-foreground">NWIS Benchmark Evaluation</h3>
                   <p className="text-xs text-text-muted">Real evaluated benchmark on synthetic test partition</p>
                 </div>
               </div>

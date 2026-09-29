@@ -209,7 +209,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
-                className="font-mono text-xs text-text-muted tracking-wide uppercase mb-3 text-center max-w-md"
+                className="font-sans text-xs sm:text-sm text-text-muted mb-3 text-center max-w-md font-normal"
               >
                 AI-Powered Offset Well Knowledge & Decision Support Platform
               </motion.p>

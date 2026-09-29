@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Activity,
@@ -102,7 +102,7 @@ export default function Telemetry() {
         <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-hairline">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-grotesk">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-sans">
                 Live Telemetry & Rig Sensor Stream
               </h1>
               <span className="text-xs px-3 py-1 rounded-full bg-accent/8 border border-accent/20 text-accent font-medium flex items-center gap-1.5">

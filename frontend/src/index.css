@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -37,9 +37,9 @@
   --color-text-dim:      #475569;
 
   /* ── Fonts ────────────────────────────────────── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-grotesk: 'Space Grotesk', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-mono: 'IBM Plex Mono', monospace;
 }
 
 :root {
@@ -100,7 +100,7 @@ html, body, #root {
   width: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans), 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -121,7 +121,7 @@ body {
    ═══════════════════════════════════════════════════════ */
 
 .font-mono {
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'IBM Plex Mono', monospace !important;
 }
 
 .font-grotesk {
@@ -400,10 +400,10 @@ body {
   align-items: center;
   gap: 8px;
   padding: 12px 32px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #050508;
   background: linear-gradient(135deg, #0ea5e9, #22d3ee);
@@ -469,7 +469,7 @@ body {
 
 .leaflet-container {
   background: #050508 !important;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   width: 100% !important;
   height: 100% !important;
 }

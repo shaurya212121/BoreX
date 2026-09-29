@@ -422,7 +422,7 @@ export default function KnowledgeRepo() {
             <div>
               <div className="flex items-center gap-2.5">
                 <Database size={18} className="text-primary-glow drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]" />
-                <h3 className="font-grotesk font-bold text-base text-foreground drop-shadow-sm">
+                <h3 className="font-sans font-semibold text-base text-foreground drop-shadow-sm">
                   Assam Basin Offset Incident Corpus & Lithological Index
                 </h3>
               </div>
