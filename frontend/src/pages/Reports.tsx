@@ -346,15 +346,15 @@ export default function Reports() {
         {/* ── Phase 3: Auto-Drafted DDR Entries Panel ── */}
         <div className="p-6 sm:p-7 pl-7 sm:pl-9 rounded-2xl glass-card shadow-sm space-y-5">
           <div className="flex items-center justify-between pb-4 border-b border-hairline">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-warm/10 border border-accent-warm/20 flex items-center justify-center text-accent-warm shrink-0">
-                <Bot size={20} />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center text-accent-warm shadow-inner shrink-0">
+                <Bot size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-foreground font-sans">
+                <h3 className="text-xl font-bold text-slate-100 tracking-tight">
                   Auto-Drafted DDR Entries
                 </h3>
-                <p className="text-xs text-text-muted mt-0.5">
+                <p className="text-sm text-slate-400 mt-1">
                   Anomaly-detected draft Daily Drilling Report entries awaiting review
                 </p>
               </div>
@@ -397,9 +397,9 @@ export default function Reports() {
                   <div className="space-y-6">
                     {/* Pending Drafts */}
                     {draftEntries.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="text-[10px] font-bold text-warning uppercase tracking-wider flex items-center gap-2">
-                          <Clock size={12} />
+                      <div className="space-y-4">
+                        <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
+                          <Clock size={14} className="text-warning" />
                           Pending Review ({draftEntries.length})
                         </div>
                         {draftEntries.slice(0, 10).map((draft) => (
@@ -407,43 +407,43 @@ export default function Reports() {
                             key={draft.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-4 pl-6 rounded-xl bg-panel border border-hairline hover:border-hairline-light transition-all space-y-3"
+                            className="p-5 pl-6 rounded-xl bg-slate-800/30 border border-slate-700 hover:border-slate-600 transition-all space-y-4 shadow-sm"
                           >
                             {/* Draft Header */}
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-2.5">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-center gap-3">
                                 <div
-                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  className="w-3 h-3 rounded-full shrink-0 shadow-sm"
                                   style={{ background: ANOMALY_TYPE_COLORS[draft.anomaly_type] }}
                                 />
                                 <div>
-                                  <div className="text-sm font-semibold text-foreground">
+                                  <div className="text-base font-semibold text-slate-100">
                                     {ANOMALY_TYPE_LABELS[draft.anomaly_type]}
                                   </div>
-                                  <div className="text-[11px] text-text-muted mt-0.5">
-                                    {draft.formation.name} · <span className="font-mono">{draft.bit_depth.toFixed(0)}m MD</span> · {new Date(draft.timestamp).toLocaleTimeString()}
+                                  <div className="text-xs text-slate-500 mt-1 font-medium">
+                                    {draft.formation.name} &bull; <span className="font-mono text-slate-400">{draft.bit_depth.toFixed(0)}m MD</span> &bull; {new Date(draft.timestamp).toLocaleTimeString()}
                                   </div>
                                 </div>
                               </div>
-                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30 shrink-0">
+                              <span className="text-xs font-bold px-3 py-1 rounded-full bg-warning/10 text-warning border border-warning/20 shrink-0">
                                 DRAFT
                               </span>
                             </div>
 
                             {/* Anomaly Details */}
-                            <div className="text-xs text-text-muted space-y-1">
+                            <div className="text-sm text-slate-300 space-y-2 leading-relaxed bg-slate-900/50 p-4 rounded-lg border border-slate-800/50">
                               {draft.anomalies.slice(0, 2).map((a, i) => (
-                                <p key={i} className="leading-relaxed">{a.description}</p>
+                                <p key={i}>{a.description}</p>
                               ))}
                             </div>
 
                             {/* Matched Offset Events */}
                             {draft.matched_offset_events.length > 0 && (
-                              <div className="text-[11px] text-text-muted">
+                              <div className="text-xs text-slate-400">
                                 <span className="font-semibold text-primary-glow">Matched offsets:</span>{' '}
                                 {draft.matched_offset_events.slice(0, 3).map((e, i) => (
                                   <span key={i}>
-                                    {e.source_document.split('_')[1] || e.well_name} ({e.depth_m.toFixed(0)}m)
+                                    {e.source_document.split('_')[1] || e.well_name} (<span className="font-mono text-slate-500">{e.depth_m.toFixed(0)}m</span>)
                                     {i < Math.min(draft.matched_offset_events.length, 3) - 1 ? ', ' : ''}
                                   </span>
                                 ))}
@@ -451,44 +451,44 @@ export default function Reports() {
                             )}
 
                             {/* Telemetry Snapshot */}
-                            <div className="grid grid-cols-4 gap-2 text-[10px]">
-                              <div className="p-2 rounded-lg glass-card">
-                                <div className="text-text-dim">ROP</div>
-                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.ropMh} m/hr</div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                              <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50">
+                                <div className="text-slate-500 font-medium mb-1">ROP</div>
+                                <div className="font-mono font-semibold text-slate-200 text-sm">{draft.telemetry_snapshot.ropMh} m/hr</div>
                               </div>
-                              <div className="p-2 rounded-lg glass-card">
-                                <div className="text-text-dim">Torque</div>
-                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.torqueKftlb} kft·lb</div>
+                              <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50">
+                                <div className="text-slate-500 font-medium mb-1">Torque</div>
+                                <div className="font-mono font-semibold text-slate-200 text-sm">{draft.telemetry_snapshot.torqueKftlb} kft·lb</div>
                               </div>
-                              <div className="p-2 rounded-lg glass-card">
-                                <div className="text-text-dim">Pit Vol</div>
-                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.pitVolumeBbl} bbl</div>
+                              <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50">
+                                <div className="text-slate-500 font-medium mb-1">Pit Vol</div>
+                                <div className="font-mono font-semibold text-slate-200 text-sm">{draft.telemetry_snapshot.pitVolumeBbl} bbl</div>
                               </div>
-                              <div className="p-2 rounded-lg glass-card">
-                                <div className="text-text-dim">Gas</div>
-                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.gasUnits} units</div>
+                              <div className="p-3 rounded-lg bg-slate-800/40 border border-slate-700/50">
+                                <div className="text-slate-500 font-medium mb-1">Gas</div>
+                                <div className="font-mono font-semibold text-slate-200 text-sm">{draft.telemetry_snapshot.gasUnits} units</div>
                               </div>
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-hairline/60">
+                            <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-slate-700/50">
                               <button
                                 onClick={() => discardDraft(draft.id)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-text-muted hover:text-danger hover:bg-danger/10 transition-colors border border-transparent hover:border-danger/30"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-danger hover:bg-danger/10 transition-colors border border-transparent hover:border-danger/20"
                               >
-                                <Trash2 size={13} /> Discard
+                                <Trash2 size={16} /> Discard
                               </button>
                               <button
                                 onClick={() => handleOpenEdit(draft)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-text-muted hover:text-primary-glow hover:bg-primary/10 transition-colors border border-transparent hover:border-primary/30"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-primary-glow hover:bg-primary/10 transition-colors border border-transparent hover:border-primary/30"
                               >
-                                <Pencil size={13} /> Edit
+                                <Pencil size={16} /> Edit
                               </button>
                               <button
                                 onClick={() => confirmDraft(draft.id)}
-                                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs bg-accent/90 text-white font-semibold hover:bg-accent transition-colors shadow-sm"
+                                className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm bg-accent text-slate-900 font-semibold hover:bg-accent-warm hover:text-white transition-colors shadow-md"
                               >
-                                <Check size={13} /> Confirm
+                                <Check size={16} /> Confirm
                               </button>
                             </div>
                           </motion.div>
@@ -498,30 +498,30 @@ export default function Reports() {
 
                     {/* Confirmed Entries */}
                     {confirmedEntries.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="text-[10px] font-bold text-accent uppercase tracking-wider flex items-center gap-2">
-                          <CheckCircle2 size={12} />
+                      <div className="space-y-4 mt-8">
+                        <div className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
+                          <CheckCircle2 size={16} className="text-success" />
                           Confirmed DDR Entries ({confirmedEntries.length})
                         </div>
                         {confirmedEntries.slice(0, 8).map((entry) => (
                           <div
                             key={entry.id}
-                            className="p-4 pl-6 rounded-xl glass-card text-xs space-y-2 border border-accent/10"
+                            className="p-4 pl-5 rounded-xl bg-slate-800/20 border border-slate-700/50 text-sm space-y-2 shadow-sm"
                           >
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle2 size={14} className="text-accent" />
-                                <span className="font-semibold text-foreground">
+                              <div className="flex items-center gap-2.5">
+                                <CheckCircle2 size={16} className="text-success" />
+                                <span className="font-semibold text-slate-200">
                                   {ANOMALY_TYPE_LABELS[entry.anomaly_type]}
                                 </span>
                               </div>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30">
+                              <span className="text-xs font-bold px-3 py-1 rounded-full bg-success/10 text-success border border-success/20">
                                 CONFIRMED
                               </span>
                             </div>
-                            <div className="text-text-muted text-[11px]">
-                              {entry.formation.name} · <span className="font-mono">{entry.bit_depth.toFixed(0)}m MD</span> · {new Date(entry.timestamp).toLocaleTimeString()}
-                              {entry.notes && <span className="text-primary-glow ml-2">Note: {entry.notes}</span>}
+                            <div className="text-slate-400 text-xs mt-1">
+                              {entry.formation.name} &bull; <span className="font-mono">{entry.bit_depth.toFixed(0)}m MD</span> &bull; {new Date(entry.timestamp).toLocaleTimeString()}
+                              {entry.notes && <span className="block mt-2 text-primary-glow bg-primary/5 p-2 rounded border border-primary/10">Note: {entry.notes}</span>}
                             </div>
                           </div>
                         ))}

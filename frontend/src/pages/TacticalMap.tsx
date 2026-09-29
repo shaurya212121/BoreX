@@ -780,40 +780,40 @@ export default function TacticalMap() {
 
       {/* ── Phase 4: Time to Hazard Panel ── */}
       {upcomingHazards.length > 0 && (
-        <div className="absolute top-20 left-5 sm:left-6 z-[1100] pointer-events-auto print-hide">
+        <div className="absolute top-24 left-5 sm:left-8 z-[1100] pointer-events-auto print-hide">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="glass-panel border border-hairline-light rounded-2xl shadow-2xl p-4 w-[300px]"
+            className="bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl p-5 w-[340px]"
           >
-            <div className="flex items-center gap-2 pb-3 border-b border-hairline mb-3">
-              <Clock size={16} className="text-warning" />
-              <span className="text-xs font-bold text-foreground uppercase tracking-wider">Time to Hazard</span>
-              <span className="ml-auto text-[10px] font-mono text-text-muted">ROP: {currentTelemetry.ropMh} m/hr</span>
+            <div className="flex items-center gap-2 pb-4 border-b border-slate-700 mb-4">
+              <Clock size={20} className="text-warning" />
+              <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Time to Hazard</h3>
+              <span className="ml-auto text-xs font-mono text-slate-400 bg-slate-800/50 px-2 py-1 rounded">ROP: {currentTelemetry.ropMh} m/h</span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {upcomingHazards.map((h, idx) => (
-                <div key={`${h.alert.id}-${idx}`} className={`p-3 rounded-xl glass-card text-xs space-y-2 ${h.isUrgent ? 'hazard-flash border border-danger/40' : 'border border-hairline/50'}`}>
+                <div key={`${h.alert.id}-${idx}`} className={`p-4 rounded-xl space-y-3 shadow-sm ${h.isUrgent ? 'hazard-flash bg-danger/5 border border-danger/30' : 'bg-slate-800/40 border border-slate-700/50'}`}>
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      h.alert.severity === 'CRITICAL' ? 'badge-critical' : h.alert.severity === 'HIGH' ? 'badge-high' : 'badge-medium'
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                      h.alert.severity === 'CRITICAL' ? 'bg-danger/20 text-danger border border-danger/30' : h.alert.severity === 'HIGH' ? 'bg-warning/20 text-warning border border-warning/30' : 'bg-primary/20 text-primary-glow border border-primary/30'
                     }`}>
                       {h.alert.severity}
                     </span>
-                    <span className="font-mono text-text-muted text-[11px]">{h.alert.matched_depth_m}m MD</span>
+                    <span className="font-mono text-slate-400 text-xs">{h.alert.matched_depth_m}m MD</span>
                   </div>
 
-                  <div className="text-foreground font-semibold text-[11px]">{eventLabel(h.alert.event_type)}</div>
+                  <div className="text-slate-100 font-semibold text-sm leading-snug">{eventLabel(h.alert.event_type)}</div>
 
-                  <div className="flex items-center gap-3 text-[10px] text-text-muted">
-                    <span>⬇ <strong className="text-foreground">{h.metresToGo.toFixed(0)}m</strong> to go</span>
-                    <span>⏱ <strong className={h.isUrgent ? 'text-danger' : 'text-foreground'}>{h.timeBestEst}</strong></span>
-                    <span className="text-text-dim">({h.timeMinEst}–{h.timeMaxEst})</span>
+                  <div className="flex items-center gap-4 text-xs text-slate-400">
+                    <span className="flex items-center gap-1">⬇ <strong className="text-slate-200">{h.metresToGo.toFixed(0)}m</strong> to go</span>
+                    <span className="flex items-center gap-1">⏱ <strong className={h.isUrgent ? 'text-danger' : 'text-slate-200'}>{h.timeBestEst}</strong></span>
+                    <span className="text-slate-500 text-[11px]">({h.timeMinEst}–{h.timeMaxEst})</span>
                   </div>
 
                   {/* Progress bar colored by severity */}
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         h.alert.severity === 'CRITICAL' ? 'bg-danger' : h.alert.severity === 'HIGH' ? 'bg-warning' : 'bg-primary'
@@ -945,48 +945,48 @@ export default function TacticalMap() {
             className="absolute top-5 right-5 sm:right-6 bottom-24 w-full max-w-[440px] glass-panel border border-hairline-light rounded-2xl shadow-2xl z-[1500] flex flex-col overflow-hidden print-panel"
           >
             {/* Header */}
-            <div className="p-5 pb-3.5 border-b border-hairline flex items-start justify-between shrink-0">
+            <div className="p-6 pb-4 border-b border-slate-700/80 flex items-start justify-between shrink-0 bg-slate-900/50">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-accent-warm/15 text-accent-warm border border-accent-warm/30">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-accent-warm/20 text-accent-warm border border-accent-warm/30 uppercase tracking-wider">
                     Proposed Well
                   </span>
-                  <span className="text-[10px] font-mono text-text-muted">
+                  <span className="text-xs font-mono text-slate-400 bg-slate-800/50 px-2 py-0.5 rounded">
                     {proposedOffsetWells.length} offsets in range
                   </span>
                 </div>
-                <h3 className="font-sans font-bold text-lg text-foreground">PROPOSED WELL</h3>
-                <p className="text-xs text-text-muted font-mono">
+                <h3 className="font-sans font-bold text-2xl text-slate-100 tracking-tight">Well Plan Analysis</h3>
+                <p className="text-sm text-slate-400 font-mono mt-1">
                   {proposedWell.lat.toFixed(4)}°N, {proposedWell.lon.toFixed(4)}°E
                 </p>
               </div>
               <button
                 onClick={() => { setProposedWellPanelOpen(false); setProposedWell(null) }}
-                className="p-1.5 rounded-lg text-text-muted hover:text-foreground hover:glass-card transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5 pr-3">
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 pr-4">
 
               {/* Section 1: Expected Formation Tops */}
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Layers size={14} className="text-primary-glow" />
-                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Expected Formation Tops</span>
+                <div className="flex items-center gap-2 mb-4 border-b border-slate-800 pb-2">
+                  <Layers size={18} className="text-primary-glow" />
+                  <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Expected Formation Tops</span>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-3">
                   {expectedFormationTops.map((f, idx) => (
-                    <div key={idx} className="p-3 rounded-xl glass-card text-xs flex items-start justify-between gap-2">
+                    <div key={idx} className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 shadow-sm flex items-start justify-between gap-4">
                       <div>
-                        <div className="font-semibold text-foreground text-[11px]">{f.name}</div>
-                        <div className="text-text-muted text-[10px] mt-0.5">{f.lithology}</div>
+                        <div className="font-semibold text-slate-200 text-sm">{f.name}</div>
+                        <div className="text-slate-400 text-xs mt-1 leading-relaxed">{f.lithology}</div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="font-mono text-foreground text-[11px] font-bold">{f.expectedTopM}–{f.expectedBottomM}m</div>
-                        <div className="text-[10px] text-text-muted">{f.hazards[0]}</div>
+                        <div className="font-mono text-slate-200 text-sm font-bold bg-slate-900/50 px-2 py-1 rounded border border-slate-800">{f.expectedTopM}–{f.expectedBottomM}m</div>
+                        <div className="text-xs text-slate-500 mt-1">{f.hazards[0]}</div>
                       </div>
                     </div>
                   ))}
@@ -995,32 +995,32 @@ export default function TacticalMap() {
 
               {/* Section 2: Historical Trouble Depths */}
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={14} className="text-warning" />
-                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Historical Trouble Depths</span>
+                <div className="flex items-center gap-2 mb-4 border-b border-slate-800 pb-2">
+                  <AlertTriangle size={18} className="text-warning" />
+                  <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Historical Trouble Depths</span>
                 </div>
                 {troubleDepthBands.length === 0 ? (
-                  <div className="p-4 rounded-xl glass-card text-center text-xs text-text-muted">
+                  <div className="p-5 rounded-xl bg-slate-800/20 border border-slate-700/30 text-center text-sm text-slate-500">
                     No offset incident data available in range.
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
+                  <div className="space-y-3">
                     {troubleDepthBands.map((band, idx) => (
-                      <div key={idx} className="p-3 rounded-xl glass-card text-xs flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                      <div key={idx} className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 shadow-sm flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-3 h-3 rounded-full shrink-0 shadow-sm ${
                             band.event_type === 'kick' || band.event_type === 'overpressure' ? 'bg-danger' :
                             band.event_type === 'mud_loss' ? 'bg-warning' :
                             band.event_type === 'stuck_pipe' ? 'bg-accent-warm' : 'bg-primary'
                           }`} />
                           <div>
-                            <div className="font-semibold text-foreground text-[11px]">{eventLabel(band.event_type)}</div>
-                            <div className="text-[10px] text-text-muted">{band.depthBand}</div>
+                            <div className="font-semibold text-slate-200 text-sm">{eventLabel(band.event_type)}</div>
+                            <div className="text-xs text-slate-400 mt-0.5">{band.depthBand}</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-mono text-foreground text-[11px] font-bold">{band.count} events</div>
-                          <div className="text-[10px] text-text-muted">nearest: {band.nearestDistanceKm.toFixed(1)} km</div>
+                          <div className="font-mono text-slate-100 text-sm font-bold">{band.count} events</div>
+                          <div className="text-xs text-slate-500 mt-0.5">nearest: {band.nearestDistanceKm.toFixed(1)} km</div>
                         </div>
                       </div>
                     ))}
@@ -1029,28 +1029,31 @@ export default function TacticalMap() {
               </div>
 
               {/* Section 3: Suggested Casing & Mud Program */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Wrench size={14} className="text-accent" />
-                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Suggested Casing & Mud Program</span>
+              <div className="bg-slate-900/40 rounded-xl p-5 border border-slate-700/30">
+                <div className="flex items-center gap-2 mb-3 border-b border-slate-800 pb-2">
+                  <Wrench size={18} className="text-accent" />
+                  <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Suggested Casing & Mud Program</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-warning/10 border border-warning/20 text-[10px] text-warning font-medium mb-3 flex items-center gap-2">
-                  <AlertTriangle size={12} className="shrink-0" />
+                <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-xs text-warning font-medium mb-5 flex items-center gap-3">
+                  <AlertTriangle size={16} className="shrink-0" />
                   <span>Analog suggestion, engineer approval required</span>
                 </div>
 
                 {/* Casing */}
                 {proposedWellCasing.casing.length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Casing Program (Nearest Analog)</div>
-                    <div className="space-y-1">
+                  <div className="mb-5">
+                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-500"></div>
+                      Casing Program (Nearest Analog)
+                    </div>
+                    <div className="space-y-2">
                       {proposedWellCasing.casing.slice(0, 4).map((c, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg glass-card text-[11px] flex justify-between">
+                        <div key={idx} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm flex justify-between shadow-sm">
                           <div>
-                            <span className="text-foreground font-semibold">{c.hole_section}</span>
-                            <span className="text-text-muted ml-2">{c.casing_size_in}" / {c.hole_size_in}" hole</span>
+                            <span className="text-slate-200 font-semibold">{c.hole_section}</span>
+                            <span className="text-slate-400 ml-3 text-xs">{c.casing_size_in}" / {c.hole_size_in}" hole</span>
                           </div>
-                          <span className="font-mono text-foreground">{c.setting_depth_m}m</span>
+                          <span className="font-mono text-slate-200 font-bold">{c.setting_depth_m}m</span>
                         </div>
                       ))}
                     </div>
@@ -1060,15 +1063,18 @@ export default function TacticalMap() {
                 {/* Mud */}
                 {proposedWellMud.length > 0 && (
                   <div>
-                    <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Mud Properties (Nearest Analog)</div>
-                    <div className="space-y-1">
+                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-500"></div>
+                      Mud Properties (Nearest Analog)
+                    </div>
+                    <div className="space-y-2">
                       {proposedWellMud.slice(0, 3).map((m, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg glass-card text-[11px] flex justify-between">
+                        <div key={idx} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm flex justify-between shadow-sm">
                           <div>
-                            <span className="text-foreground font-semibold">{m.mud_type}</span>
-                            <span className="text-text-muted ml-2">{m.formation}</span>
+                            <span className="text-slate-200 font-semibold">{m.mud_type}</span>
+                            <span className="text-slate-400 ml-3 text-xs truncate max-w-[120px] sm:max-w-none inline-block align-bottom">{m.formation}</span>
                           </div>
-                          <span className="font-mono text-foreground">{m.mud_weight_sg} SG</span>
+                          <span className="font-mono text-slate-200 font-bold">{m.mud_weight_sg} SG</span>
                         </div>
                       ))}
                     </div>
@@ -1078,25 +1084,25 @@ export default function TacticalMap() {
             </div>
 
             {/* Footer with Pre-Spud Brief download */}
-            <div className="p-5 pt-3 border-t border-hairline flex items-center justify-between shrink-0">
+            <div className="p-6 border-t border-slate-700/80 flex items-center justify-between shrink-0 bg-slate-900/80">
               <button
                 onClick={() => { setProposedWellPanelOpen(false); setProposedWell(null) }}
-                className="px-3.5 py-1.5 rounded-xl glass-card hover:bg-panel-hover text-foreground font-medium text-xs border border-hairline transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm border border-slate-600 transition-colors shadow-sm"
               >
                 Close
               </button>
               <button
                 onClick={handlePreSpudDownload}
                 disabled={generatingPreSpud}
-                className="flex items-center gap-2 px-4 py-2 bg-accent-warm text-white font-semibold text-xs rounded-xl hover:brightness-110 transition-all shadow-sm disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 bg-accent-warm hover:bg-accent-warm/90 text-slate-900 font-bold text-sm rounded-xl transition-all shadow-md disabled:opacity-50"
               >
                 {generatingPreSpud ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" /> Generating...
+                    <Loader2 size={16} className="animate-spin" /> Generating...
                   </>
                 ) : (
                   <>
-                    <Download size={14} /> Download Pre-Spud Brief
+                    <Download size={16} /> Download Pre-Spud Brief
                   </>
                 )}
               </button>
