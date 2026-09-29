@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+﻿import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Download,
@@ -9,14 +9,14 @@ import {
   X,
   AlertTriangle,
   Layers,
-  CheckCircle2,
+  CheckCircle2, FileText,
 } from 'lucide-react'
 import type { Well, RiskAlert } from '../lib/supabase'
 import {
   getWells,
   getRiskAlerts,
   fetchBackendTelemetry,
-  generateServerPdf,
+  generateServerPdf, getAutoDrafts,
 } from '../lib/dataService'
 import { getFormationAtDepth } from '../lib/assamBenchmarkData'
 
@@ -53,6 +53,7 @@ export default function Reports() {
   const [severityFilter, setSeverityFilter] = useState<string>('ALL')
   const [sortBy, setSortBy] = useState<'risk' | 'distance' | 'depth'>('risk')
   const [loading, setLoading] = useState(true)
+  const [autoDrafts, setAutoDrafts] = useState<any[]>([])
   const [generatingPdf, setGeneratingPdf] = useState(false)
   const [telemetry, setTelemetry] = useState<any>(null)
 
@@ -60,6 +61,8 @@ export default function Reports() {
     async function load() {
       try {
         setLoading(true)
+        const draftsRes = await getAutoDrafts()
+        setAutoDrafts(draftsRes)
         const wellsRes = await getWells()
         if (wellsRes.error) throw new Error(wellsRes.error)
 
@@ -178,7 +181,7 @@ export default function Reports() {
   const stratigraphicHorizons = [
     {
       name: 'Girujan Clay Formation',
-      interval: 'Surface – 900m MD',
+      interval: 'Surface â€“ 900m MD',
       lithology: 'Mottled claystone, siltstone lenses',
       pressure: 'Normal (1.08 SG)',
       risk: 'Borehole enlargement & sticky clay',
@@ -187,7 +190,7 @@ export default function Reports() {
     },
     {
       name: 'Upper Tipam Sandstone Fm.',
-      interval: '900m – 1,850m MD',
+      interval: '900m â€“ 1,850m MD',
       lithology: 'Coarse porous sandstone, conglomerate beds',
       pressure: 'Normal (1.14 SG)',
       risk: 'Severe Mud Loss / Lost Circulation (IND-NWIS-04)',
@@ -196,7 +199,7 @@ export default function Reports() {
     },
     {
       name: 'Lower Tipam Sandstone Fm.',
-      interval: '1,850m – 2,750m MD',
+      interval: '1,850m â€“ 2,750m MD',
       lithology: 'Interbedded sandstone and dark shale',
       pressure: 'Depleted Reservoir (1.18 - 1.24 SG)',
       risk: 'Differential Pipe Sticking (IND-NWIS-01, IND-NWIS-07)',
@@ -205,7 +208,7 @@ export default function Reports() {
     },
     {
       name: 'Barail Coal-Shale Fm.',
-      interval: '2,750m – 3,400m MD',
+      interval: '2,750m â€“ 3,400m MD',
       lithology: 'Sub-bituminous coal seams, carbonaceous shale',
       pressure: 'Overpressured Gas (1.35 - 1.42 SG)',
       risk: 'Gas Influx / Well Kick (IND-NWIS-06)',
@@ -214,7 +217,7 @@ export default function Reports() {
     },
     {
       name: 'Kopili Shale Formation',
-      interval: '3,400m – 3,820m MD',
+      interval: '3,400m â€“ 3,820m MD',
       lithology: 'Fissile reactive marine shale',
       pressure: 'Elevated (1.28 SG)',
       risk: 'Chemical Sloughing & Hole Pack-Off (IND-NWIS-02)',
@@ -276,7 +279,7 @@ export default function Reports() {
   return (
     <div className="w-full select-none">
       <div className="page-container space-y-8">
-        {/* ── Top Header & Global Actions ── */}
+        {/* â”€â”€ Top Header & Global Actions â”€â”€ */}
         <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-hairline">
           <div>
             <div className="flex items-center gap-3">
@@ -310,7 +313,7 @@ export default function Reports() {
           </button>
         </div>
 
-        {/* ── Level 1: Subsurface Risk Summary Metrics Strip ── */}
+        {/* â”€â”€ Level 1: Subsurface Risk Summary Metrics Strip â”€â”€ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex flex-col justify-between shadow-xs">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Monitored Grid</span>
@@ -345,7 +348,65 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* ── Level 2: Search & Filter Toolbar ── */}
+        {/* Innovation #2: Automated Event Logging (DDR Auto-Drafts) */}
+
+        {autoDrafts.length > 0 && (
+  <div className="rounded-2xl glass-card flex flex-col p-6 sm:p-8 shadow-[0_0_20px_rgba(16,185,129,0.05)] border border-primary/30 bg-primary/5">
+    <div className="flex justify-between items-start mb-6">
+      <div>
+        <div className="inline-block px-2.5 py-1 rounded-full bg-primary/20 border border-primary/40 text-[10px] font-bold text-primary-glow tracking-widest mb-3">INNOVATION FEATURE 2</div>
+        <h3 className="font-sans font-bold text-lg text-foreground mb-1.5 flex items-center gap-2.5">
+          <FileText size={20} className="text-primary-glow" />
+          AI-Automated Daily Drilling Reports (DDR)
+        </h3>
+        <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+          When the telemetry stream detects an active anomaly (e.g. mud loss, stuck pipe), the system automatically drafts a structured DDR entry pre-populated with exact depth, formation, and sensor snapshots.
+        </p>
+      </div>
+      <div className="text-xs font-mono font-bold text-primary-glow px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
+        {autoDrafts.length} DRAFTS PENDING REVIEW
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {autoDrafts.map((draft, idx) => (
+        <div key={idx} className="bg-panel border border-hairline rounded-xl p-4 hover:border-primary/50 transition-colors group cursor-pointer relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2 bg-primary/20 rounded-bl-xl border-b border-l border-primary/30 text-[10px] font-bold text-primary-glow">
+            {draft.hazard_code}
+          </div>
+          <div className="text-[10px] font-mono text-text-muted mb-1">{new Date(draft.timestamp || Date.now()).toLocaleDateString()}</div>
+          <div className="font-bold text-sm text-foreground mb-3">{draft.formation}</div>
+          <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+            <div>
+              <div className="text-[10px] text-text-muted">Depth</div>
+              <div className="font-mono">{draft.depth_m}m</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-text-muted">Standpipe</div>
+              <div className="font-mono">{draft.standpipe_psi} psi</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-text-muted">ROP</div>
+              <div className="font-mono">{draft.rop_m_h} m/hr</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-text-muted">Mud Wt.</div>
+              <div className="font-mono">{draft.mud_weight_sg} SG</div>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-300 italic mb-4 line-clamp-2">
+            "Auto-detected telemetry anomaly: {draft.status_text}"
+          </p>
+          <button className="w-full py-2 bg-primary/10 group-hover:bg-primary/20 text-primary-glow border border-primary/30 rounded-lg text-xs font-bold transition-colors">
+            Review & Approve
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+        {/* â”€â”€ Level 2: Search & Filter Toolbar â”€â”€ */}
         <div className="flex flex-wrap items-center justify-between gap-5 p-5 sm:p-6 pl-7 sm:pl-8 rounded-2xl glass-card shadow-xs">
           <div className="flex items-center gap-3.5 flex-1 min-w-[280px]">
             <div className="relative flex-1 flex items-center">
@@ -396,7 +457,7 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* ── Level 3: Multi-Well Risk Card Grid (Generous 2-Column Layout with 36px Left Padding) ── */}
+        {/* â”€â”€ Level 3: Multi-Well Risk Card Grid (Generous 2-Column Layout with 36px Left Padding) â”€â”€ */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <Loader2 size={32} className="animate-spin text-primary-glow" />
@@ -489,7 +550,7 @@ export default function Reports() {
           </div>
         )}
 
-        {/* ── Level 4: Stratigraphic Subsurface Risk Distribution Matrix (Spacious 2-Col Non-Overflowing Grid) ── */}
+        {/* â”€â”€ Level 4: Stratigraphic Subsurface Risk Distribution Matrix (Spacious 2-Col Non-Overflowing Grid) â”€â”€ */}
         <div className="p-7 sm:p-9 pl-8 sm:pl-10 rounded-2xl glass-card space-y-7 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div className="flex items-center gap-3.5">
@@ -543,7 +604,7 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* ── Slide-Over Detailed Risk Dossier Drawer ── */}
+      {/* â”€â”€ Slide-Over Detailed Risk Dossier Drawer â”€â”€ */}
       <AnimatePresence>
         {selectedWellProfile && (
           <div className="fixed inset-0 z-[4000] flex justify-end bg-black/60 backdrop-blur-xs">
@@ -569,7 +630,7 @@ export default function Reports() {
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-foreground mt-2 font-sans">{selectedWellProfile.well.name}</h2>
                   <p className="text-xs text-text-muted mt-1">
-                    {selectedWellProfile.well.field_name} · {selectedWellProfile.distanceKm.toFixed(1)} km proximity
+                    {selectedWellProfile.well.field_name} Â· {selectedWellProfile.distanceKm.toFixed(1)} km proximity
                   </p>
                 </div>
 

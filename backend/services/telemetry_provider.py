@@ -195,6 +195,11 @@ class SyntheticTelemetryProvider(ITelemetryProvider):
             active_warning = "CRITICAL ALERT: Offset IND-NWIS-06 took 24 bbl gas kick at 3,120m MD"
             hazard_code = "GAS_KICK"
 
+        # Innovation #1: Safe Operating Envelope metrics
+        pore_pressure_sg = round(max(1.0, mw - 0.08 + (wave * 0.01)), 2)
+        fracture_gradient_sg = round(mw + 0.15 + (wave * 0.02), 2)
+        safe_mw_window = [pore_pressure_sg, fracture_gradient_sg]
+
         return {
             "well_name": self.active_well_name,
             "depth_m": round(depth_m, 1),
@@ -210,6 +215,9 @@ class SyntheticTelemetryProvider(ITelemetryProvider):
             "gas_units": gas,
             "pit_volume_bbl": pit_vol,
             "hookload_klbf": hookload,
+            "pore_pressure_sg": pore_pressure_sg,
+            "fracture_gradient_sg": fracture_gradient_sg,
+            "safe_mw_window": safe_mw_window,
             "status_text": status_text,
             "active_warning": active_warning,
             "hazard_code": hazard_code,

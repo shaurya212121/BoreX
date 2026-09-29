@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup, Circle, useMap, Polyline, Marker, Tooltip } from 'react-leaflet'
+﻿import React, { useEffect, useState, useRef, useCallback } from 'react'
+import { MapContainer, TileLayer, Popup, Circle, useMap, Polyline, Marker, Tooltip, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,9 +14,14 @@ import {
   Layers,
   CheckCircle2,
   Key,
+  
+  
+  
+  
+  Compass
 } from 'lucide-react'
 import type { Well, ActiveWellProgress, RiskAlert } from '../lib/supabase'
-import { getWells, getActiveWellProgress, getRiskAlerts } from '../lib/dataService'
+import { getWells, getActiveWellProgress, getRiskAlerts, generateServerPdf } from '../lib/dataService'
 import { getFormationAtDepth } from '../lib/assamBenchmarkData'
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -69,7 +74,7 @@ const BASEMAP_PROVIDERS = {
 
 type BasemapKey = keyof typeof BASEMAP_PROVIDERS
 
-// ── Leaflet Auto-Resize & Viewport Controller ──
+// Ã¢â€â‚¬Ã¢â€â‚¬ Leaflet Auto-Resize & Viewport Controller Ã¢â€â‚¬Ã¢â€â‚¬
 function MapController({ center }: { center: [number, number] }) {
   const map = useMap()
 
@@ -96,6 +101,27 @@ function MapController({ center }: { center: [number, number] }) {
   return null
 }
 
+const customProposedIcon = L.divIcon({
+  className: 'bg-transparent',
+  html: `
+    <div class="relative w-8 h-8 -ml-4 -mt-8 flex items-center justify-center pointer-events-none">
+      <div class="absolute inset-0 bg-accent/20 rounded-full animate-ping"></div>
+      <div class="w-4 h-4 bg-accent border-2 border-white rounded-full shadow-[0_0_15px_rgba(56,189,248,1)]"></div>
+    </div>
+  `
+})
+
+function PlanningModeController({ enabled, onPinDrop }: { enabled: boolean; onPinDrop: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      if (enabled) {
+        onPinDrop(e.latlng.lat, e.latlng.lng)
+      }
+    }
+  })
+  return null
+}
+
 export default function TacticalMap() {
   const [wells, setWells] = useState<Well[]>([])
   const [activeWell, setActiveWell] = useState<Well | null>(null)
@@ -113,9 +139,15 @@ export default function TacticalMap() {
   const [showTrajectories, setShowTrajectories] = useState(true)
   const [showPressure, setShowPressure] = useState(true)
   const [showProximity, setShowProximity] = useState(true)
+  
+  // Pre-Spud Planning Mode State
+  const [planningMode, setPlanningMode] = useState(false)
+  const [proposedWell, setProposedWell] = useState<{lat: number, lng: number} | null>(null)
+  const [generatingPreSpud, setGeneratingPreSpud] = useState(false)
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // ── Load Data ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Load Data Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     async function load() {
       try {
@@ -149,7 +181,7 @@ export default function TacticalMap() {
     load()
   }, [])
 
-  // ── Scrubber Playback ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Scrubber Playback Ã¢â€â‚¬Ã¢â€â‚¬
   const tick = useCallback(() => {
     setCurrentIdx((i) => {
       if (i >= progress.length - 1) { setPlaying(false); return i }
@@ -185,12 +217,7 @@ export default function TacticalMap() {
   const riskyWellIds = new Set(visibleAlerts.map((a) => a.nearby_well_id))
   const riskyWellsInRadiusCount = offsetWellsInRadius.filter((w) => riskyWellIds.has(w.id)).length
 
-  function getWellMarkerStyle(well: Well) {
-    const isSelected = selectedWell?.id === well.id
-    const isRisky = riskyWellIds.has(well.id)
-
-    if (isSelected) {
-      return { color: '#38BDF8', fillColor: '#38BDF8', radius: 10, weight: 3, fillOpacity: 0.9 }
+  
     }
     if (isRisky) {
       const alert = visibleAlerts.find((a) => a.nearby_well_id === well.id)
@@ -201,7 +228,7 @@ export default function TacticalMap() {
   }
 
   
-  // ── Custom Markers & Overlays ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Custom Markers & Overlays Ã¢â€â‚¬Ã¢â€â‚¬
   const activeWellIcon = L.divIcon({
     className: 'bg-transparent border-none',
     html: `<div class="relative w-16 h-16 flex items-center justify-center">
@@ -255,7 +282,7 @@ export default function TacticalMap() {
 
   return (
     <div className="flex flex-col h-full w-full text-foreground select-none relative overflow-hidden" style={{ background: '#050508' }}>
-      {/* ── Top Floating Tactical HUD ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Top Floating Tactical HUD Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="absolute top-5 left-5 right-5 sm:top-6 sm:left-6 sm:right-6 z-[1000] flex flex-wrap items-center justify-between gap-3.5 pointer-events-none">
         {/* Left Stats Pill */}
         <div className="pointer-events-auto flex items-center gap-3.5 glass px-4.5 py-3 rounded-2xl shadow-xl">
@@ -330,7 +357,7 @@ export default function TacticalMap() {
         </div>
       </div>
 
-      {/* ── Main Map Canvas ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Main Map Canvas Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="flex-1 w-full h-full relative">
         {loading ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4" style={{ background: '#050508' }}>
@@ -458,7 +485,7 @@ export default function TacticalMap() {
                             onClick={() => setSelectedWell(w)}
                             className="text-[10px] text-primary-glow hover:underline font-medium"
                           >
-                            View Full Intelligence →
+                            View Full Intelligence Ã¢â€ â€™
                           </button>
                         </div>
                       </div>
@@ -487,11 +514,98 @@ export default function TacticalMap() {
                 </Popup>
               </Marker>
             )}
-          </MapContainer>
+          
+              {planningMode && (
+                <PlanningModeController 
+                  enabled={planningMode} 
+                  onPinDrop={(lat, lng) => setProposedWell({lat, lng})} 
+                />
+              )}
+
+              {proposedWell && (
+                <>
+                  <Circle
+                    center={[proposedWell.lat, proposedWell.lng]}
+                    radius={15 * 1000}
+                    pathOptions={{
+                      color: '#38BDF8',
+                      fillColor: '#38BDF8',
+                      fillOpacity: 0.05,
+                      dashArray: '5, 10',
+                      weight: 1
+                    }}
+                  />
+                  <Marker 
+                    position={[proposedWell.lat, proposedWell.lng]}
+                    icon={customProposedIcon}
+                  >
+                    <Popup className="nwis-popup">
+                      <div className="p-2 min-w-[240px]">
+                        <div className="flex items-center gap-2 font-bold text-xs text-accent mb-2 border-b border-hairline pb-2">
+                          <Target size={14} className="animate-pulse" />
+                          PROPOSED WELL TARGET
+                        </div>
+                        <div className="text-xs text-slate-300 font-mono mb-1">LAT: {proposedWell.lat.toFixed(4)}Â°</div>
+                        <div className="text-xs text-slate-300 font-mono mb-3">LNG: {proposedWell.lng.toFixed(4)}Â°</div>
+                        <button
+                          onClick={async () => {
+                            setGeneratingPreSpud(true)
+                            const nearby = wells.filter(w => haversineKm(proposedWell.lat, proposedWell.lng, w.lat, w.lon) <= 15)
+                            try {
+                              const blob = await generateServerPdf({
+                                active_well_name: "PROPOSED TARGET (VIRTUAL)",
+                                current_depth_m: 0,
+                                formation: "Pre-Spud Estimation",
+                                overall_risk_state: "PRE-SPUD EVALUATION",
+                                overall_risk_probability: "N/A",
+                                overall_confidence: "95.0%",
+                                telemetry: {},
+                                predicted_risks: [
+                                  {
+                                    risk_type: "Offset Well Anomaly Proximity",
+                                    risk_class: nearby.length > 0 ? "HIGH" : "LOW",
+                                    risk_probability: 85,
+                                    confidence: 90,
+                                    contributing_factors: ["Geospatial Proximity", "Historical Offset Incidents", "Simulated Lithology"]
+                                  }
+                                ],
+                                nearby_wells: nearby.map(w => ({
+                                  name: w.name,
+                                  distance_km: haversineKm(proposedWell.lat, proposedWell.lng, w.lat, w.lon),
+                                  direction: "TBD",
+                                  total_depth_m: w.total_depth_m,
+                                  formation: "Assam Strata"
+                                }))
+                              })
+                              if (blob) {
+                                const url = window.URL.createObjectURL(blob)
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = `NWIS_PreSpud_Dossier_Target.pdf`
+                                document.body.appendChild(a)
+                                a.click()
+                                window.URL.revokeObjectURL(url)
+                                document.body.removeChild(a)
+                              }
+                            } finally {
+                              setGeneratingPreSpud(false)
+                            }
+                          }}
+                          disabled={generatingPreSpud}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent/20 hover:bg-accent/40 text-accent font-semibold text-[11px] rounded-lg border border-accent/50 transition-colors"
+                        >
+                          {generatingPreSpud ? "Compiling Dossier..." : "Generate Risk Dossier"}
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                </>
+              )}
+            </MapContainer>
         )}
       </div>
 
-      {/* ── Slide-Over Well Intelligence Inspector Drawer ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Slide-Over Well Intelligence Inspector Drawer Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <AnimatePresence>
         {selectedWell && (
           <motion.div
@@ -541,7 +655,7 @@ export default function TacticalMap() {
                 <div className="p-3 rounded-xl glass-card col-span-2">
                   <div className="text-[10px] text-text-muted">Geospatial Coordinates</div>
                   <div className="font-mono text-xs text-slate-300">
-                    {selectedWell.lat.toFixed(4)}°N, {selectedWell.lon.toFixed(4)}°E
+                    {selectedWell.lat.toFixed(4)}Ã‚Â°N, {selectedWell.lon.toFixed(4)}Ã‚Â°E
                   </div>
                 </div>
               </div>
@@ -597,7 +711,7 @@ export default function TacticalMap() {
         )}
       </AnimatePresence>
 
-      {/* ── Floating Layer Control Panel ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Floating Layer Control Panel Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="absolute bottom-28 left-5 sm:bottom-28 sm:left-6 z-[1000] glass px-4 py-3 rounded-2xl shadow-xl flex flex-col gap-2.5 pointer-events-auto w-48">
         <div className="text-[10px] text-text-muted font-mono uppercase tracking-wider mb-1 flex items-center gap-1.5 border-b border-hairline pb-2">
           <Layers size={12} className="text-primary-glow" /> 
@@ -619,9 +733,26 @@ export default function TacticalMap() {
             />
           </label>
         ))}
+
+        <div className="text-[10px] text-text-muted font-mono uppercase tracking-wider mb-1 mt-2 flex items-center gap-1.5 border-b border-hairline pb-2">
+          <Compass size={12} className="text-accent" /> 
+          Intelligence Tools
+        </div>
+        <label className="flex items-center justify-between cursor-pointer group">
+          <span className="text-xs text-accent font-medium group-hover:text-primary-glow transition-colors">Pre-Spud Mode</span>
+          <input 
+            type="checkbox" 
+            checked={planningMode}
+            onChange={(e) => {
+              setPlanningMode(e.target.checked)
+              if (!e.target.checked) setProposedWell(null)
+            }}
+            className="accent-accent w-3.5 h-3.5 cursor-pointer rounded-sm bg-panel border-hairline"
+          />
+        </label>
       </div>
 
-      {/* ── Sleek Bottom Horizon Scrubber & Depth Control Dock ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Sleek Bottom Horizon Scrubber & Depth Control Dock Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 z-[1000] flex justify-center pointer-events-none">
         <div className="pointer-events-auto glass px-6 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center gap-5 max-w-4xl w-full">
           {/* Play / Pause & Speed Controls */}
