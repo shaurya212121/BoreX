@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useRef, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, Popup, Circle, useMap, Polyline, Marker, Tooltip, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -217,17 +217,8 @@ export default function TacticalMap() {
   const riskyWellIds = new Set(visibleAlerts.map((a) => a.nearby_well_id))
   const riskyWellsInRadiusCount = offsetWellsInRadius.filter((w) => riskyWellIds.has(w.id)).length
 
-  
-    }
-    if (isRisky) {
-      const alert = visibleAlerts.find((a) => a.nearby_well_id === well.id)
-      const color = alert?.severity === 'CRITICAL' ? '#F43F5E' : '#F59E0B'
-      return { color: color, fillColor: color, radius: 8, weight: 2, fillOpacity: 0.85 }
-    }
-    return { color: '#0EA5E9', fillColor: '#0EA5E9', radius: 6, weight: 1.5, fillOpacity: 0.75 }
-  }
 
-  
+
   // Ã¢â€â‚¬Ã¢â€â‚¬ Custom Markers & Overlays Ã¢â€â‚¬Ã¢â€â‚¬
   const activeWellIcon = L.divIcon({
     className: 'bg-transparent border-none',
