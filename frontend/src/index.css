@@ -9,12 +9,12 @@
 
 @theme {
   /* ── Core Palette ─────────────────────────────── */
-  --color-bg:            #0a0e1a;
-  --color-bg-elevated:   #0f1320;
-  --color-panel:         rgba(16, 20, 32, 0.88);
-  --color-panel-solid:   #10141e;
-  --color-panel-card:    rgba(22, 28, 42, 0.78);
-  --color-panel-hover:   rgba(32, 38, 56, 0.82);
+  --color-bg:            #050508;
+  --color-bg-elevated:   #0a0a0f;
+  --color-panel:         rgba(12, 12, 18, 0.85);
+  --color-panel-solid:   #0c0c12;
+  --color-panel-card:    rgba(18, 18, 28, 0.75);
+  --color-panel-hover:   rgba(28, 28, 42, 0.8);
 
   /* ── Accent Colors ────────────────────────────── */
   --color-primary:       #0ea5e9;
@@ -27,9 +27,9 @@
   --color-success:       #10b981;
 
   /* ── Borders & Lines ──────────────────────────── */
-  --color-hairline:      rgba(255, 255, 255, 0.10);
-  --color-hairline-light: rgba(255, 255, 255, 0.15);
-  --color-hairline-glow: rgba(14, 165, 233, 0.20);
+  --color-hairline:      rgba(255, 255, 255, 0.06);
+  --color-hairline-light: rgba(255, 255, 255, 0.1);
+  --color-hairline-glow: rgba(14, 165, 233, 0.15);
 
   /* ── Text ─────────────────────────────────────── */
   --color-foreground:    #f0f0f5;
@@ -43,24 +43,24 @@
 }
 
 :root {
-  --bg:           #0a0e1a;
-  --panel:        #10141e;
-  --panel-card:   rgba(22, 28, 42, 0.78);
+  --bg:           #050508;
+  --panel:        #0c0c12;
+  --panel-card:   rgba(18, 18, 28, 0.75);
   --text:         #f0f0f5;
   --primary:      #0ea5e9;
   --secondary:    #64748b;
   --danger:       #f43f5e;
   --warning:      #f59e0b;
   --success:      #10b981;
-  --hairline:     rgba(255, 255, 255, 0.10);
+  --hairline:     rgba(255, 255, 255, 0.06);
 
   /* Layout */
   --page-max-w:   1520px;
   --text-max-w:   68ch;
 
   /* Glass */
-  --glass-bg:     rgba(14, 18, 30, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-bg:     rgba(12, 12, 20, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur:   20px;
 }
 
@@ -106,15 +106,6 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background-image:
-    radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
-    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 24px 24px;
-  background-position: 0 0, 0 0, 0 0;
-}
-
 
 /* ═══════════════════════════════════════════════════════
    TYPOGRAPHY UTILITIES
@@ -155,33 +146,33 @@ body {
 }
 
 .glass-subtle {
-  background: rgba(14, 18, 30, 0.5);
+  background: rgba(12, 12, 20, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .glass-card {
-  background: rgba(18, 22, 36, 0.6);
+  background: rgba(14, 14, 22, 0.55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  background: rgba(24, 30, 48, 0.75);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(20, 20, 32, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5),
-              0 0 0 1px rgba(14, 165, 233, 0.1);
+              0 0 0 1px rgba(14, 165, 233, 0.08);
 }
 
 .glass-panel {
-  background: rgba(12, 16, 26, 0.8);
+  background: rgba(10, 10, 16, 0.75);
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Gradient border card */
@@ -632,8 +623,8 @@ body {
   position: relative;
   padding: 20px;
   border-radius: 16px;
-  background: rgba(18, 22, 36, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(14, 14, 22, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -660,11 +651,115 @@ body {
   opacity: 1;
 }
 
-/* Tactical Radar Sweep for Active Well */
-@keyframes radarSweep {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* ═══════════════════════════════════════════════════════
+   BoreX Phase 4: HAZARD FLASH ANIMATION
+   Applied when estimated time to hazard < 1 hour
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes hazard-flash {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0),
+                inset 0 0 0 0 rgba(244, 63, 94, 0);
+    border-color: rgba(244, 63, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(244, 63, 94, 0.3),
+                inset 0 0 12px 0 rgba(244, 63, 94, 0.08);
+    border-color: rgba(244, 63, 94, 0.8);
+  }
 }
-.radar-sweep {
-  animation: radarSweep 3s linear infinite;
+
+.hazard-flash {
+  animation: hazard-flash 1.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BoreX Phase 1: PROPOSED WELL MARKER PULSE
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes pulse-proposed {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.7),
+                0 0 16px rgba(167, 139, 250, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(167, 139, 250, 0),
+                0 0 24px rgba(167, 139, 250, 0.2);
+  }
+}
+
+/* Override leaflet default icon styles for custom proposed well icon */
+.proposed-well-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BoreX Phase 1: PRINT STYLES (Pre-Spud Brief Fallback)
+   ═══════════════════════════════════════════════════════ */
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-container {
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .print-panel {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding: 24px !important;
+    margin: 16px 0 !important;
+  }
+
+  .print-panel * {
+    color: #111 !important;
+  }
+
+  .print-panel .text-text-muted,
+  .print-panel .text-text-dim {
+    color: #666 !important;
+  }
+
+  .print-panel .glass-card,
+  .print-panel .glass {
+    background: #f8f8f8 !important;
+    border: 1px solid #ddd !important;
+    backdrop-filter: none !important;
+  }
+
+  .glass-panel {
+    background: #fff !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Hide map, scrubber, and other non-print elements */
+  .leaflet-container,
+  .leaflet-control-container {
+    display: none !important;
+  }
+
+  /* Page breaks */
+  .print-panel > div {
+    page-break-inside: avoid;
+  }
 }

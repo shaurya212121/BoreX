@@ -7,6 +7,7 @@ import KnowledgeRepo from './pages/KnowledgeRepo'
 import Telemetry from './pages/Telemetry'
 import Reports from './pages/Reports'
 import TrajectoryComparison from './pages/TrajectoryComparison'
+import { DDRStoreProvider } from './lib/ddrStore'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -31,10 +32,12 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <div className="noise-overlay">
-        <AnimatedRoutes />
-      </div>
-    </BrowserRouter>
+    <DDRStoreProvider>
+      <BrowserRouter>
+        <div className="noise-overlay">
+          <AnimatedRoutes />
+        </div>
+      </BrowserRouter>
+    </DDRStoreProvider>
   )
 }

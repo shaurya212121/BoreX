@@ -18,7 +18,6 @@ Generates:
 import os
 import uuid
 import random
-import math
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
@@ -291,7 +290,7 @@ def write_sql_seed_file(wells, reports, progress, alerts, filepath="seed_indian_
 def main():
     print("Generating Assam Synthetic Demonstration Basin dataset...")
     wells, reports, progress, alerts = generate_all_datasets()
-    print(f"Generated:")
+    print("Generated:")
     print(f"  - Wells: {len(wells)} (1 Active + {len(wells)-1} Historical)")
     print(f"  - Drilling Reports: {len(reports)}")
     print(f"  - Active Progress Points: {len(progress)}")

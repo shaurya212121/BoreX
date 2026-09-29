@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Download,
@@ -9,16 +9,25 @@ import {
   X,
   AlertTriangle,
   Layers,
-  CheckCircle2, FileText,
+  CheckCircle2,
+  FileText,
+  Check,
+  Pencil,
+  Trash2,
+  Bot,
+  Clock,
 } from 'lucide-react'
 import type { Well, RiskAlert } from '../lib/supabase'
 import {
   getWells,
   getRiskAlerts,
   fetchBackendTelemetry,
-  generateServerPdf, getAutoDrafts,
+  generateServerPdf,
 } from '../lib/dataService'
 import { getFormationAtDepth } from '../lib/assamBenchmarkData'
+import { useDDRStore } from '../lib/ddrStore'
+import { ANOMALY_TYPE_LABELS, ANOMALY_TYPE_COLORS } from '../lib/anomalyDetector'
+import type { DraftDDREntry } from '../lib/anomalyDetector'
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371.0
@@ -53,16 +62,19 @@ export default function Reports() {
   const [severityFilter, setSeverityFilter] = useState<string>('ALL')
   const [sortBy, setSortBy] = useState<'risk' | 'distance' | 'depth'>('risk')
   const [loading, setLoading] = useState(true)
-  const [autoDrafts, setAutoDrafts] = useState<any[]>([])
   const [generatingPdf, setGeneratingPdf] = useState(false)
   const [telemetry, setTelemetry] = useState<any>(null)
+
+  // ── Phase 3: Draft DDR Store ──
+  const { draftEntries, confirmedEntries, confirmDraft, discardDraft, updateDraft, confirmWithEdits } = useDDRStore()
+  const [editingDraft, setEditingDraft] = useState<DraftDDREntry | null>(null)
+  const [editNotes, setEditNotes] = useState('')
+  const [ddrPanelOpen, setDdrPanelOpen] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true)
-        const draftsRes = await getAutoDrafts()
-        setAutoDrafts(draftsRes)
         const wellsRes = await getWells()
         if (wellsRes.error) throw new Error(wellsRes.error)
 
@@ -181,7 +193,7 @@ export default function Reports() {
   const stratigraphicHorizons = [
     {
       name: 'Girujan Clay Formation',
-      interval: 'Surface â€“ 900m MD',
+      interval: 'Surface – 900m MD',
       lithology: 'Mottled claystone, siltstone lenses',
       pressure: 'Normal (1.08 SG)',
       risk: 'Borehole enlargement & sticky clay',
@@ -190,7 +202,7 @@ export default function Reports() {
     },
     {
       name: 'Upper Tipam Sandstone Fm.',
-      interval: '900m â€“ 1,850m MD',
+      interval: '900m – 1,850m MD',
       lithology: 'Coarse porous sandstone, conglomerate beds',
       pressure: 'Normal (1.14 SG)',
       risk: 'Severe Mud Loss / Lost Circulation (IND-NWIS-04)',
@@ -199,7 +211,7 @@ export default function Reports() {
     },
     {
       name: 'Lower Tipam Sandstone Fm.',
-      interval: '1,850m â€“ 2,750m MD',
+      interval: '1,850m – 2,750m MD',
       lithology: 'Interbedded sandstone and dark shale',
       pressure: 'Depleted Reservoir (1.18 - 1.24 SG)',
       risk: 'Differential Pipe Sticking (IND-NWIS-01, IND-NWIS-07)',
@@ -208,7 +220,7 @@ export default function Reports() {
     },
     {
       name: 'Barail Coal-Shale Fm.',
-      interval: '2,750m â€“ 3,400m MD',
+      interval: '2,750m – 3,400m MD',
       lithology: 'Sub-bituminous coal seams, carbonaceous shale',
       pressure: 'Overpressured Gas (1.35 - 1.42 SG)',
       risk: 'Gas Influx / Well Kick (IND-NWIS-06)',
@@ -217,7 +229,7 @@ export default function Reports() {
     },
     {
       name: 'Kopili Shale Formation',
-      interval: '3,400m â€“ 3,820m MD',
+      interval: '3,400m – 3,820m MD',
       lithology: 'Fissile reactive marine shale',
       pressure: 'Elevated (1.28 SG)',
       risk: 'Chemical Sloughing & Hole Pack-Off (IND-NWIS-02)',
@@ -276,10 +288,28 @@ export default function Reports() {
     }
   }
 
+  // ── Phase 3: Edit modal handlers ──
+  const handleOpenEdit = (draft: DraftDDREntry) => {
+    setEditingDraft({ ...draft })
+    setEditNotes(draft.notes)
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingDraft) return
+    confirmWithEdits(editingDraft.id, { notes: editNotes })
+    setEditingDraft(null)
+    setEditNotes('')
+  }
+
+  const handleCancelEdit = () => {
+    setEditingDraft(null)
+    setEditNotes('')
+  }
+
   return (
     <div className="w-full select-none">
       <div className="page-container space-y-8">
-        {/* â”€â”€ Top Header & Global Actions â”€â”€ */}
+        {/* ── Top Header & Global Actions ── */}
         <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-hairline">
           <div>
             <div className="flex items-center gap-3">
@@ -313,7 +343,198 @@ export default function Reports() {
           </button>
         </div>
 
-        {/* â”€â”€ Level 1: Subsurface Risk Summary Metrics Strip â”€â”€ */}
+        {/* ── Phase 3: Auto-Drafted DDR Entries Panel ── */}
+        <div className="p-6 sm:p-7 pl-7 sm:pl-9 rounded-2xl glass-card shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-4 border-b border-hairline">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent-warm/10 border border-accent-warm/20 flex items-center justify-center text-accent-warm shrink-0">
+                <Bot size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground font-sans">
+                  Auto-Drafted DDR Entries
+                </h3>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Anomaly-detected draft Daily Drilling Report entries awaiting review
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {draftEntries.length > 0 && (
+                <span className="text-xs px-3 py-1 rounded-full bg-warning/10 border border-warning/30 text-warning font-bold">
+                  {draftEntries.length} Draft{draftEntries.length !== 1 ? 's' : ''} Pending
+                </span>
+              )}
+              {confirmedEntries.length > 0 && (
+                <span className="text-xs px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent font-bold">
+                  {confirmedEntries.length} Confirmed
+                </span>
+              )}
+              <button
+                onClick={() => setDdrPanelOpen(!ddrPanelOpen)}
+                className="text-xs px-3 py-1.5 rounded-xl glass-card hover:bg-panel-hover text-text-muted hover:text-foreground transition-colors border border-hairline"
+              >
+                {ddrPanelOpen ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {ddrPanelOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                {draftEntries.length === 0 && confirmedEntries.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-text-muted">
+                    <Bot size={28} className="mx-auto mb-2 text-text-dim" />
+                    <p>No anomaly-detected DDR drafts yet.</p>
+                    <p className="mt-1 text-text-dim">Navigate the depth scrubber on the Tactical Map to generate real-time anomaly detections.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Pending Drafts */}
+                    {draftEntries.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="text-[10px] font-bold text-warning uppercase tracking-wider flex items-center gap-2">
+                          <Clock size={12} />
+                          Pending Review ({draftEntries.length})
+                        </div>
+                        {draftEntries.slice(0, 10).map((draft) => (
+                          <motion.div
+                            key={draft.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 pl-6 rounded-xl bg-panel border border-hairline hover:border-hairline-light transition-all space-y-3"
+                          >
+                            {/* Draft Header */}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  style={{ background: ANOMALY_TYPE_COLORS[draft.anomaly_type] }}
+                                />
+                                <div>
+                                  <div className="text-sm font-semibold text-foreground">
+                                    {ANOMALY_TYPE_LABELS[draft.anomaly_type]}
+                                  </div>
+                                  <div className="text-[11px] text-text-muted mt-0.5">
+                                    {draft.formation.name} · <span className="font-mono">{draft.bit_depth.toFixed(0)}m MD</span> · {new Date(draft.timestamp).toLocaleTimeString()}
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30 shrink-0">
+                                DRAFT
+                              </span>
+                            </div>
+
+                            {/* Anomaly Details */}
+                            <div className="text-xs text-text-muted space-y-1">
+                              {draft.anomalies.slice(0, 2).map((a, i) => (
+                                <p key={i} className="leading-relaxed">{a.description}</p>
+                              ))}
+                            </div>
+
+                            {/* Matched Offset Events */}
+                            {draft.matched_offset_events.length > 0 && (
+                              <div className="text-[11px] text-text-muted">
+                                <span className="font-semibold text-primary-glow">Matched offsets:</span>{' '}
+                                {draft.matched_offset_events.slice(0, 3).map((e, i) => (
+                                  <span key={i}>
+                                    {e.source_document.split('_')[1] || e.well_name} ({e.depth_m.toFixed(0)}m)
+                                    {i < Math.min(draft.matched_offset_events.length, 3) - 1 ? ', ' : ''}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Telemetry Snapshot */}
+                            <div className="grid grid-cols-4 gap-2 text-[10px]">
+                              <div className="p-2 rounded-lg glass-card">
+                                <div className="text-text-dim">ROP</div>
+                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.ropMh} m/hr</div>
+                              </div>
+                              <div className="p-2 rounded-lg glass-card">
+                                <div className="text-text-dim">Torque</div>
+                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.torqueKftlb} kft·lb</div>
+                              </div>
+                              <div className="p-2 rounded-lg glass-card">
+                                <div className="text-text-dim">Pit Vol</div>
+                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.pitVolumeBbl} bbl</div>
+                              </div>
+                              <div className="p-2 rounded-lg glass-card">
+                                <div className="text-text-dim">Gas</div>
+                                <div className="font-mono font-bold text-foreground">{draft.telemetry_snapshot.gasUnits} units</div>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-hairline/60">
+                              <button
+                                onClick={() => discardDraft(draft.id)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-text-muted hover:text-danger hover:bg-danger/10 transition-colors border border-transparent hover:border-danger/30"
+                              >
+                                <Trash2 size={13} /> Discard
+                              </button>
+                              <button
+                                onClick={() => handleOpenEdit(draft)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-text-muted hover:text-primary-glow hover:bg-primary/10 transition-colors border border-transparent hover:border-primary/30"
+                              >
+                                <Pencil size={13} /> Edit
+                              </button>
+                              <button
+                                onClick={() => confirmDraft(draft.id)}
+                                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs bg-accent/90 text-white font-semibold hover:bg-accent transition-colors shadow-sm"
+                              >
+                                <Check size={13} /> Confirm
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Confirmed Entries */}
+                    {confirmedEntries.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="text-[10px] font-bold text-accent uppercase tracking-wider flex items-center gap-2">
+                          <CheckCircle2 size={12} />
+                          Confirmed DDR Entries ({confirmedEntries.length})
+                        </div>
+                        {confirmedEntries.slice(0, 8).map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="p-4 pl-6 rounded-xl glass-card text-xs space-y-2 border border-accent/10"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle2 size={14} className="text-accent" />
+                                <span className="font-semibold text-foreground">
+                                  {ANOMALY_TYPE_LABELS[entry.anomaly_type]}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30">
+                                CONFIRMED
+                              </span>
+                            </div>
+                            <div className="text-text-muted text-[11px]">
+                              {entry.formation.name} · <span className="font-mono">{entry.bit_depth.toFixed(0)}m MD</span> · {new Date(entry.timestamp).toLocaleTimeString()}
+                              {entry.notes && <span className="text-primary-glow ml-2">Note: {entry.notes}</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ── Level 1: Subsurface Risk Summary Metrics Strip ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="p-6 pl-8 sm:p-7 sm:pl-9 rounded-2xl glass-card flex flex-col justify-between shadow-xs">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Monitored Grid</span>
@@ -348,65 +569,7 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Innovation #2: Automated Event Logging (DDR Auto-Drafts) */}
-
-        {autoDrafts.length > 0 && (
-  <div className="rounded-2xl glass-card flex flex-col p-6 sm:p-8 shadow-[0_0_20px_rgba(16,185,129,0.05)] border border-primary/30 bg-primary/5">
-    <div className="flex justify-between items-start mb-6">
-      <div>
-        <div className="inline-block px-2.5 py-1 rounded-full bg-primary/20 border border-primary/40 text-[10px] font-bold text-primary-glow tracking-widest mb-3">INNOVATION FEATURE 2</div>
-        <h3 className="font-sans font-bold text-lg text-foreground mb-1.5 flex items-center gap-2.5">
-          <FileText size={20} className="text-primary-glow" />
-          AI-Automated Daily Drilling Reports (DDR)
-        </h3>
-        <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-          When the telemetry stream detects an active anomaly (e.g. mud loss, stuck pipe), the system automatically drafts a structured DDR entry pre-populated with exact depth, formation, and sensor snapshots.
-        </p>
-      </div>
-      <div className="text-xs font-mono font-bold text-primary-glow px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
-        {autoDrafts.length} DRAFTS PENDING REVIEW
-      </div>
-    </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {autoDrafts.map((draft, idx) => (
-        <div key={idx} className="bg-panel border border-hairline rounded-xl p-4 hover:border-primary/50 transition-colors group cursor-pointer relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-2 bg-primary/20 rounded-bl-xl border-b border-l border-primary/30 text-[10px] font-bold text-primary-glow">
-            {draft.hazard_code}
-          </div>
-          <div className="text-[10px] font-mono text-text-muted mb-1">{new Date(draft.timestamp || Date.now()).toLocaleDateString()}</div>
-          <div className="font-bold text-sm text-foreground mb-3">{draft.formation}</div>
-          <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-            <div>
-              <div className="text-[10px] text-text-muted">Depth</div>
-              <div className="font-mono">{draft.depth_m}m</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-text-muted">Standpipe</div>
-              <div className="font-mono">{draft.standpipe_psi} psi</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-text-muted">ROP</div>
-              <div className="font-mono">{draft.rop_m_h} m/hr</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-text-muted">Mud Wt.</div>
-              <div className="font-mono">{draft.mud_weight_sg} SG</div>
-            </div>
-          </div>
-          <p className="text-[11px] text-slate-300 italic mb-4 line-clamp-2">
-            "Auto-detected telemetry anomaly: {draft.status_text}"
-          </p>
-          <button className="w-full py-2 bg-primary/10 group-hover:bg-primary/20 text-primary-glow border border-primary/30 rounded-lg text-xs font-bold transition-colors">
-            Review & Approve
-          </button>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-        {/* â”€â”€ Level 2: Search & Filter Toolbar â”€â”€ */}
+        {/* ── Level 2: Search & Filter Toolbar ── */}
         <div className="flex flex-wrap items-center justify-between gap-5 p-5 sm:p-6 pl-7 sm:pl-8 rounded-2xl glass-card shadow-xs">
           <div className="flex items-center gap-3.5 flex-1 min-w-[280px]">
             <div className="relative flex-1 flex items-center">
@@ -457,7 +620,7 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* â”€â”€ Level 3: Multi-Well Risk Card Grid (Generous 2-Column Layout with 36px Left Padding) â”€â”€ */}
+        {/* ── Level 3: Multi-Well Risk Card Grid ── */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <Loader2 size={32} className="animate-spin text-primary-glow" />
@@ -550,7 +713,7 @@ export default function Reports() {
           </div>
         )}
 
-        {/* â”€â”€ Level 4: Stratigraphic Subsurface Risk Distribution Matrix (Spacious 2-Col Non-Overflowing Grid) â”€â”€ */}
+        {/* ── Level 4: Stratigraphic Subsurface Risk Distribution Matrix ── */}
         <div className="p-7 sm:p-9 pl-8 sm:pl-10 rounded-2xl glass-card space-y-7 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div className="flex items-center gap-3.5">
@@ -604,7 +767,7 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* â”€â”€ Slide-Over Detailed Risk Dossier Drawer â”€â”€ */}
+      {/* ── Slide-Over Detailed Risk Dossier Drawer ── */}
       <AnimatePresence>
         {selectedWellProfile && (
           <div className="fixed inset-0 z-[4000] flex justify-end bg-black/60 backdrop-blur-xs">
@@ -630,7 +793,7 @@ export default function Reports() {
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-foreground mt-2 font-sans">{selectedWellProfile.well.name}</h2>
                   <p className="text-xs text-text-muted mt-1">
-                    {selectedWellProfile.well.field_name} Â· {selectedWellProfile.distanceKm.toFixed(1)} km proximity
+                    {selectedWellProfile.well.field_name} · {selectedWellProfile.distanceKm.toFixed(1)} km proximity
                   </p>
                 </div>
 
@@ -730,6 +893,75 @@ export default function Reports() {
                       <Download size={16} /> Export PDF Dossier
                     </>
                   )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Phase 3: Edit Draft DDR Modal ── */}
+      <AnimatePresence>
+        {editingDraft && (
+          <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-xl bg-panel border border-hairline-light rounded-2xl shadow-2xl p-7 space-y-5"
+            >
+              <div className="flex items-start justify-between pb-4 border-b border-hairline">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Pencil size={16} className="text-primary-glow" />
+                    <span className="text-sm font-bold text-foreground">Edit Draft DDR Entry</span>
+                  </div>
+                  <div className="text-xs text-text-muted">
+                    {ANOMALY_TYPE_LABELS[editingDraft.anomaly_type]} · {editingDraft.formation.name} · {editingDraft.bit_depth.toFixed(0)}m MD
+                  </div>
+                </div>
+                <button
+                  onClick={handleCancelEdit}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-foreground hover:glass-card transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Anomaly summary */}
+              <div className="p-4 rounded-xl glass-card text-xs space-y-1.5">
+                {editingDraft.anomalies.map((a, i) => (
+                  <p key={i} className="text-text-muted leading-relaxed">{a.description}</p>
+                ))}
+              </div>
+
+              {/* Editable Notes */}
+              <div>
+                <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-2">
+                  Engineer Notes / Comments
+                </label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Add context, observations, or corrective actions taken..."
+                  rows={4}
+                  className="w-full bg-bg border border-hairline rounded-xl p-4 text-sm text-foreground placeholder:text-text-dim outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all resize-none font-mono"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-hairline">
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 rounded-xl glass-card hover:bg-panel-hover text-foreground text-xs font-medium border border-hairline transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex items-center gap-2 px-5 py-2 bg-accent text-white font-semibold text-xs rounded-xl hover:brightness-110 transition-all shadow-sm"
+                >
+                  <Check size={14} /> Confirm with Edits
                 </button>
               </div>
             </motion.div>

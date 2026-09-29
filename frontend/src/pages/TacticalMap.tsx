@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { MapContainer, TileLayer, Popup, Circle, useMap, Polyline, Marker, Tooltip, useMapEvents } from 'react-leaflet'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { MapContainer, TileLayer, CircleMarker, Popup, Circle, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -11,18 +11,26 @@ import {
   X,
   Target,
   RotateCcw,
-  Layers,
   CheckCircle2,
   Key,
-  
-  
-  
-  
-  Compass
+  MapPin,
+  Download,
+  Loader2,
+  Clock,
+  Crosshair,
+  Layers,
+  Gauge,
+  Droplets,
+  Wrench,
+  FileText,
 } from 'lucide-react'
-import type { Well, ActiveWellProgress, RiskAlert } from '../lib/supabase'
-import { getWells, getActiveWellProgress, getRiskAlerts, generateServerPdf } from '../lib/dataService'
-import { getFormationAtDepth } from '../lib/assamBenchmarkData'
+import type { Well, ActiveWellProgress, RiskAlert, DrillingReport } from '../lib/supabase'
+import { getWells, getActiveWellProgress, getRiskAlerts, generateServerPdf, getCasingAndCement, getMudProperties, ASSAM_REPORTS, ASSAM_ALERTS } from '../lib/dataService'
+import { getFormationAtDepth, ASSAM_FORMATIONS, getSyntheticTelemetry } from '../lib/assamBenchmarkData'
+import type { FormationInfo, CasingProgramRecord, CementProgramRecord, MudPropertyRecord } from '../lib/assamBenchmarkData'
+import { useDDRStore } from '../lib/ddrStore'
+import { analyzeRollingWindow, generateDraftDDR, ANOMALY_TYPE_LABELS } from '../lib/anomalyDetector'
+import type { ExtendedTelemetryReading } from '../lib/anomalyDetector'
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371.0
@@ -74,7 +82,38 @@ const BASEMAP_PROVIDERS = {
 
 type BasemapKey = keyof typeof BASEMAP_PROVIDERS
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Leaflet Auto-Resize & Viewport Controller Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Custom Proposed Well Icon ──
+const proposedWellIcon = L.divIcon({
+  className: 'proposed-well-icon',
+  html: `<div style="
+    width: 24px; height: 24px; 
+    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+    border: 3px solid #fff; 
+    border-radius: 50%; 
+    box-shadow: 0 0 16px rgba(167,139,250,0.7), 0 0 32px rgba(167,139,250,0.3);
+    animation: pulse-proposed 2s infinite;
+  "></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+})
+
+// ── Proposed Well coordinates type ──
+interface ProposedWellCoords {
+  lat: number
+  lon: number
+}
+
+// ── Depth band for trouble grouping ──
+interface TroubleDepthBand {
+  event_type: string
+  depthBand: string
+  depthMin: number
+  depthMax: number
+  count: number
+  nearestDistanceKm: number
+}
+
+// ── Leaflet Auto-Resize & Viewport Controller ──
 function MapController({ center }: { center: [number, number] }) {
   const map = useMap()
 
@@ -101,25 +140,26 @@ function MapController({ center }: { center: [number, number] }) {
   return null
 }
 
-const customProposedIcon = L.divIcon({
-  className: 'bg-transparent',
-  html: `
-    <div class="relative w-8 h-8 -ml-4 -mt-8 flex items-center justify-center pointer-events-none">
-      <div class="absolute inset-0 bg-accent/20 rounded-full animate-ping"></div>
-      <div class="w-4 h-4 bg-accent border-2 border-white rounded-full shadow-[0_0_15px_rgba(56,189,248,1)]"></div>
-    </div>
-  `
-})
-
-function PlanningModeController({ enabled, onPinDrop }: { enabled: boolean; onPinDrop: (lat: number, lng: number) => void }) {
+// ── Map Click Handler Component ──
+function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) {
-      if (enabled) {
-        onPinDrop(e.latlng.lat, e.latlng.lng)
-      }
-    }
+      onMapClick(e.latlng.lat, e.latlng.lng)
+    },
   })
   return null
+}
+
+// ─── Hazard Time Estimation ─────────────────────────────────────────────────
+
+interface UpcomingHazard {
+  alert: RiskAlert
+  metresToGo: number
+  timeMinEst: string
+  timeMaxEst: string
+  timeBestEst: string
+  progressPct: number
+  isUrgent: boolean // < 1 hour at best estimate
 }
 
 export default function TacticalMap() {
@@ -134,20 +174,21 @@ export default function TacticalMap() {
   const [searchRadiusKm, setSearchRadiusKm] = useState(80)
   const [activeBasemap, setActiveBasemap] = useState<BasemapKey>('DARK')
   const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-  const [showFaults, setShowFaults] = useState(true)
-  const [showTrajectories, setShowTrajectories] = useState(true)
-  const [showPressure, setShowPressure] = useState(true)
-  const [showProximity, setShowProximity] = useState(true)
-  
-  // Pre-Spud Planning Mode State
-  const [planningMode, setPlanningMode] = useState(false)
-  const [proposedWell, setProposedWell] = useState<{lat: number, lng: number} | null>(null)
-  const [generatingPreSpud, setGeneratingPreSpud] = useState(false)
-
+  const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Load Data Ã¢â€â‚¬Ã¢â€â‚¬
+  // ── Phase 1: Proposed Well State ──
+  const [proposedWell, setProposedWell] = useState<ProposedWellCoords | null>(null)
+  const [proposedWellPanelOpen, setProposedWellPanelOpen] = useState(false)
+  const [proposedWellCasing, setProposedWellCasing] = useState<{ casing: CasingProgramRecord[]; cement: CementProgramRecord[] }>({ casing: [], cement: [] })
+  const [proposedWellMud, setProposedWellMud] = useState<MudPropertyRecord[]>([])
+  const [generatingPreSpud, setGeneratingPreSpud] = useState(false)
+
+  // ── Phase 2: Anomaly Detection Telemetry Window ──
+  const telemetryWindowRef = useRef<ExtendedTelemetryReading[]>([])
+  const { addDraft } = useDDRStore()
+
+  // ── Load Data ──
   useEffect(() => {
     async function load() {
       try {
@@ -181,7 +222,7 @@ export default function TacticalMap() {
     load()
   }, [])
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Scrubber Playback Ã¢â€â‚¬Ã¢â€â‚¬
+  // ── Scrubber Playback ──
   const tick = useCallback(() => {
     setCurrentIdx((i) => {
       if (i >= progress.length - 1) { setPlaying(false); return i }
@@ -198,6 +239,29 @@ export default function TacticalMap() {
   const currentDepth = progress[currentIdx]?.current_depth_m ?? 2480
   const maxDepth = activeWell?.total_depth_m ?? 3650
   const currentFormation = getFormationAtDepth(currentDepth)
+
+  // ── Phase 2: Run anomaly detection on depth change ──
+  useEffect(() => {
+    const telemetry = getSyntheticTelemetry(currentDepth) as ExtendedTelemetryReading
+    telemetry.readingTimestamp = new Date().toISOString()
+
+    const window = telemetryWindowRef.current
+    window.push(telemetry)
+    if (window.length > 15) window.shift()
+
+    if (window.length >= 5) {
+      const anomalies = analyzeRollingWindow(telemetry, window.slice(0, -1))
+      if (anomalies.length > 0) {
+        const draft = generateDraftDDR(anomalies, telemetry)
+        if (draft) {
+          addDraft(draft)
+        }
+      }
+    }
+  }, [currentDepth, addDraft])
+
+  // ── Get current telemetry for "Time to Hazard" panel ──
+  const currentTelemetry = useMemo(() => getSyntheticTelemetry(currentDepth), [currentDepth])
 
   // Alerts visible at current depth with a lookahead window
   const visibleAlerts = allAlerts.filter(
@@ -217,52 +281,211 @@ export default function TacticalMap() {
   const riskyWellIds = new Set(visibleAlerts.map((a) => a.nearby_well_id))
   const riskyWellsInRadiusCount = offsetWellsInRadius.filter((w) => riskyWellIds.has(w.id)).length
 
+  // ── Phase 1: Proposed Well offset wells ──
+  const proposedOffsetWells = useMemo(() => {
+    if (!proposedWell) return []
+    return wells.filter((w) => {
+      const dist = haversineKm(proposedWell.lat, proposedWell.lon, w.lat, w.lon)
+      return dist <= searchRadiusKm && dist > 0
+    }).map((w) => ({
+      ...w,
+      distanceKm: haversineKm(proposedWell!.lat, proposedWell!.lon, w.lat, w.lon),
+    })).sort((a, b) => a.distanceKm - b.distanceKm)
+  }, [proposedWell, wells, searchRadiusKm])
 
+  // ── Phase 1: Expected Formation Tops (distance-weighted) ──
+  const expectedFormationTops = useMemo(() => {
+    // Use ASSAM_FORMATIONS as fallback / baseline
+    return ASSAM_FORMATIONS.map((f) => ({
+      name: f.name,
+      expectedTopM: f.topM,
+      expectedBottomM: f.bottomM,
+      lithology: f.lithology,
+      hazards: f.primaryHazards,
+    }))
+  }, [])
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Custom Markers & Overlays Ã¢â€â‚¬Ã¢â€â‚¬
-  const activeWellIcon = L.divIcon({
-    className: 'bg-transparent border-none',
-    html: `<div class="relative w-16 h-16 flex items-center justify-center">
-      <div class="absolute inset-0 rounded-full border-2 border-[#10B981]/40 radar-sweep"></div>
-      <div class="absolute w-8 h-8 rounded-full bg-[#10B981]/20 animate-pulse"></div>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" class="relative z-10 drop-shadow-[0_0_8px_#10B981]">
-         <path d="M12 2v20M8 22h8M6 10l6-8 6 8M4 14l8-12 8 12" />
-      </svg>
-    </div>`,
-    iconSize: [64, 64],
-    iconAnchor: [32, 32],
-  })
+  // ── Phase 1: Historical Trouble Depths ──
+  const troubleDepthBands = useMemo((): TroubleDepthBand[] => {
+    if (!proposedWell || proposedOffsetWells.length === 0) return []
+    const offsetIds = new Set(proposedOffsetWells.map((w) => w.id))
+    const relevantReports = ASSAM_REPORTS.filter((r: DrillingReport) => offsetIds.has(r.well_id))
 
-  const getOffsetIcon = (isRisky: boolean) => L.divIcon({
-    className: 'bg-transparent border-none',
-    html: `<div class="relative w-8 h-8 flex items-center justify-center">
-      ${isRisky ? '<div class="absolute inset-0 rounded-full bg-[#F43F5E]/30 animate-ping" style="animation-duration: 2s;"></div>' : ''}
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${isRisky ? '#F43F5E' : '#38BDF8'}" stroke-width="2.5" class="relative z-10 ${isRisky ? 'drop-shadow-[0_0_5px_#F43F5E]' : 'drop-shadow-[0_0_3px_#38BDF8]'}">
-         <circle cx="12" cy="12" r="8" />
-         <path d="M12 4v16M4 12h16" />
-      </svg>
-    </div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  })
+    // Group by event_type and 500m depth bands
+    const bandMap = new Map<string, TroubleDepthBand>()
+    for (const r of relevantReports) {
+      const bandStart = Math.floor(r.depth_m / 500) * 500
+      const bandEnd = bandStart + 500
+      const key = `${r.event_type}:${bandStart}-${bandEnd}`
+      const offsetWell = proposedOffsetWells.find((w) => w.id === r.well_id)
+      const dist = offsetWell?.distanceKm ?? 999
 
-  const getTrajectory = (well: Well) => {
-     const hash = (well.lat * well.lon * 10000) % 360;
-     const angle = hash * (Math.PI / 180);
-     const lengthKm = ((well.total_depth_m || 2000) / 1000) * 0.8;
-     const dx = Math.cos(angle) * lengthKm;
-     const dy = Math.sin(angle) * lengthKm;
-     const destLat = well.lat + (dy / 111);
-     const destLon = well.lon + (dx / (111 * Math.cos(well.lat * Math.PI/180)));
-     return [[well.lat, well.lon] as [number, number], [well.lat + (dy/222), well.lon + (dx/222)] as [number, number], [destLat, destLon] as [number, number]];
+      if (bandMap.has(key)) {
+        const existing = bandMap.get(key)!
+        existing.count++
+        existing.nearestDistanceKm = Math.min(existing.nearestDistanceKm, dist)
+      } else {
+        bandMap.set(key, {
+          event_type: r.event_type,
+          depthBand: `${bandStart}–${bandEnd}m`,
+          depthMin: bandStart,
+          depthMax: bandEnd,
+          count: 1,
+          nearestDistanceKm: dist,
+        })
+      }
+    }
+
+    return Array.from(bandMap.values()).sort((a, b) => a.depthMin - b.depthMin)
+  }, [proposedWell, proposedOffsetWells])
+
+  // ── Phase 1: Load casing & mud for nearest offset ──
+  useEffect(() => {
+    if (!proposedWell || proposedOffsetWells.length === 0) return
+    const nearestWell = proposedOffsetWells[0]
+
+    async function loadAnalog() {
+      const [casingRes, mudRes] = await Promise.all([
+        getCasingAndCement(nearestWell.id),
+        getMudProperties(nearestWell.id),
+      ])
+      setProposedWellCasing(casingRes)
+      setProposedWellMud(mudRes)
+    }
+    loadAnalog()
+  }, [proposedWell, proposedOffsetWells])
+
+  // ── Phase 1: Map click handler ──
+  const handleMapClick = useCallback((lat: number, lng: number) => {
+    setProposedWell({ lat, lon: lng })
+    setProposedWellPanelOpen(true)
+    setSelectedWell(null) // Close existing well panel
+  }, [])
+
+  // ── Phase 1: Pre-Spud Brief Download ──
+  const handlePreSpudDownload = useCallback(async () => {
+    if (!proposedWell) return
+    setGeneratingPreSpud(true)
+
+    try {
+      const payload = {
+        type: 'PRE_SPUD_BRIEF',
+        proposed_well: {
+          lat: proposedWell.lat,
+          lon: proposedWell.lon,
+        },
+        offset_wells: proposedOffsetWells.slice(0, 8).map((w) => ({
+          name: w.name,
+          distance_km: w.distanceKm,
+          total_depth_m: w.total_depth_m,
+        })),
+        expected_formations: expectedFormationTops,
+        trouble_depth_bands: troubleDepthBands,
+        casing_program: proposedWellCasing.casing.slice(0, 5),
+        mud_program: proposedWellMud.slice(0, 5),
+        generated_at: new Date().toISOString(),
+      }
+
+      const blob = await generateServerPdf(payload)
+      if (blob) {
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `BoreX_PreSpud_Brief_${proposedWell.lat.toFixed(3)}_${proposedWell.lon.toFixed(3)}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        return
+      }
+
+      // Fallback: client-side print
+      window.print()
+    } catch {
+      // Fallback: trigger browser print
+      window.print()
+    } finally {
+      setGeneratingPreSpud(false)
+    }
+  }, [proposedWell, proposedOffsetWells, expectedFormationTops, troubleDepthBands, proposedWellCasing, proposedWellMud])
+
+  // ── Phase 4: Time to Hazard (upcoming hazards beyond current depth) ──
+  const upcomingHazards = useMemo((): UpcomingHazard[] => {
+    const currentRop = currentTelemetry.ropMh
+    const window = telemetryWindowRef.current
+    const recentRops = window.length >= 2 ? window.slice(-10).map((r) => r.ropMh) : [currentRop]
+    const minRop = Math.max(1, Math.min(...recentRops))
+    const maxRop = Math.max(1, Math.max(...recentRops))
+
+    // Find unique alerts ahead (matched_depth_m > currentDepth)
+    const ahead = allAlerts
+      .filter((a) => a.matched_depth_m > currentDepth && a.distance_km <= searchRadiusKm)
+      .sort((a, b) => a.matched_depth_m - b.matched_depth_m)
+
+    // Deduplicate by depth band
+    const seen = new Set<string>()
+    const unique: RiskAlert[] = []
+    for (const a of ahead) {
+      const band = `${Math.floor(a.matched_depth_m / 50)}-${a.event_type}`
+      if (!seen.has(band)) {
+        seen.add(band)
+        unique.push(a)
+      }
+    }
+
+    return unique.slice(0, 3).map((alert) => {
+      const metresToGo = alert.matched_depth_m - currentDepth
+      const timeBestHrs = currentRop > 0 ? metresToGo / currentRop : Infinity
+      const timeMinHrs = maxRop > 0 ? metresToGo / maxRop : Infinity
+      const timeMaxHrs = minRop > 0 ? metresToGo / minRop : Infinity
+      const maxVisibleDepth = Math.max(currentDepth + 300, alert.matched_depth_m)
+      const progressPct = Math.min(100, Math.max(0, ((alert.matched_depth_m - currentDepth) / (maxVisibleDepth - currentDepth)) * 100))
+
+      const formatTime = (hrs: number) => {
+        if (!isFinite(hrs)) return '∞'
+        if (hrs < 1) return `${Math.round(hrs * 60)}min`
+        return `${hrs.toFixed(1)}hr`
+      }
+
+      return {
+        alert,
+        metresToGo,
+        timeMinEst: formatTime(timeMinHrs),
+        timeMaxEst: formatTime(timeMaxHrs),
+        timeBestEst: formatTime(timeBestHrs),
+        progressPct: 100 - progressPct,
+        isUrgent: timeBestHrs < 1,
+      }
+    })
+  }, [allAlerts, currentDepth, currentTelemetry, searchRadiusKm])
+
+  function getWellMarkerStyle(well: Well) {
+    const isSelected = selectedWell?.id === well.id
+    const isRisky = riskyWellIds.has(well.id)
+
+    if (isSelected) {
+      return { color: '#38BDF8', fillColor: '#38BDF8', radius: 10, weight: 3, fillOpacity: 0.9 }
+    }
+    if (isRisky) {
+      const alert = visibleAlerts.find((a) => a.nearby_well_id === well.id)
+      const color = alert?.severity === 'CRITICAL' ? '#F43F5E' : '#F59E0B'
+      return { color: color, fillColor: color, radius: 8, weight: 2, fillOpacity: 0.85 }
+    }
+    return { color: '#0EA5E9', fillColor: '#0EA5E9', radius: 6, weight: 1.5, fillOpacity: 0.75 }
   }
 
-  const FAULTS = [
-    { name: 'Naga Thrust Front', coords: [[27.4, 95.2], [27.35, 95.3], [27.25, 95.4]] as [number, number][], color: '#F43F5E' },
-    { name: 'Jorhat Fault', coords: [[27.25, 95.1], [27.3, 95.35]] as [number, number][], color: '#F59E0B' },
-    { name: 'Mikir Hills Lineament', coords: [[27.45, 95.35], [27.3, 95.45]] as [number, number][], color: '#F59E0B' },
-    { name: 'Disang Thrust', coords: [[27.2, 95.25], [27.3, 95.5]] as [number, number][], color: '#F43F5E' },
-  ]
+  // Check if well is a proposed offset well (highlighted)
+  function isProposedOffset(well: Well): boolean {
+    if (!proposedWell) return false
+    return proposedOffsetWells.some((w) => w.id === well.id)
+  }
+
+  function getProposedOffsetStyle(well: Well) {
+    if (isProposedOffset(well)) {
+      return { color: '#A78BFA', fillColor: '#A78BFA', radius: 8, weight: 2.5, fillOpacity: 0.85 }
+    }
+    return null
+  }
 
   const center: [number, number] = activeWell ? [activeWell.lat, activeWell.lon] : [27.3250, 95.3180]
   const currentProvider = BASEMAP_PROVIDERS[activeBasemap]
@@ -271,10 +494,24 @@ export default function TacticalMap() {
   const selectedWellAlerts = selectedWell ? allAlerts.filter((a) => a.nearby_well_id === selectedWell.id) : []
   const selectedWellDist = selectedWell && activeWell ? haversineKm(activeWell.lat, activeWell.lon, selectedWell.lat, selectedWell.lon) : null
 
+  // Event type label mapping
+  const eventLabel = (et: string) => {
+    const map: Record<string, string> = {
+      kick: 'Well Control / Kick',
+      stuck_pipe: 'Stuck Pipe',
+      overpressure: 'Overpressure',
+      mud_loss: 'Mud / Circ. Loss',
+      cementing: 'Cementing Issue',
+      drilling_problem: 'Hole Instability',
+      normal: 'Routine',
+    }
+    return map[et] || et
+  }
+
   return (
-    <div className="flex flex-col h-full w-full text-foreground select-none relative overflow-hidden" style={{ background: '#050508' }}>
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Top Floating Tactical HUD Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <div className="absolute top-5 left-5 right-5 sm:top-6 sm:left-6 sm:right-6 z-[1000] flex flex-wrap items-center justify-between gap-3.5 pointer-events-none">
+    <div className="flex flex-col h-full w-full text-foreground select-none relative overflow-hidden print-container" style={{ background: '#050508' }}>
+      {/* ── Top Floating Tactical HUD ── */}
+      <div className="absolute top-5 left-5 right-5 sm:top-6 sm:left-6 sm:right-6 z-[1000] flex flex-wrap items-center justify-between gap-3.5 pointer-events-none print-hide">
         {/* Left Stats Pill */}
         <div className="pointer-events-auto flex items-center gap-3.5 glass px-4.5 py-3 rounded-2xl shadow-xl">
           <div className="flex items-center gap-2.5 pr-3.5 border-r border-hairline">
@@ -299,6 +536,15 @@ export default function TacticalMap() {
                 {riskyWellsInRadiusCount > 0 ? `${riskyWellsInRadiusCount} hazard correlation(s)` : 'No active proximity hazards'}
               </span>
             </div>
+            {proposedWell && (
+              <>
+                <div className="h-4 w-[1px] bg-hairline" />
+                <div className="flex items-center gap-1.5 text-accent-warm">
+                  <MapPin size={14} />
+                  <span className="font-semibold">Proposed Well Active</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -348,7 +594,7 @@ export default function TacticalMap() {
         </div>
       </div>
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Main Map Canvas Ã¢â€â‚¬Ã¢â€â‚¬ */}
+      {/* ── Main Map Canvas ── */}
       <div className="flex-1 w-full h-full relative">
         {loading ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4" style={{ background: '#050508' }}>
@@ -373,6 +619,7 @@ export default function TacticalMap() {
             className="w-full h-full"
           >
             <MapController center={center} />
+            <MapClickHandler onMapClick={handleMapClick} />
 
             <TileLayer
               key={`${activeBasemap}-${currentProvider.url}`}
@@ -382,7 +629,7 @@ export default function TacticalMap() {
             />
 
             {/* Proximity Perimeter Circle */}
-            {showProximity && activeWell && (
+            {activeWell && (
               <>
                 <Circle
                   center={[activeWell.lat, activeWell.lon]}
@@ -407,204 +654,189 @@ export default function TacticalMap() {
               </>
             )}
 
-            {/* Structural Fault Lines */}
-            {showFaults && FAULTS.map((fault, i) => (
-              <Polyline key={`fault-${i}`} positions={fault.coords} pathOptions={{ color: fault.color, weight: 3, dashArray: '10 15', opacity: 0.4 }}>
-                <Tooltip sticky className="glass-panel text-xs font-mono">{fault.name}</Tooltip>
-              </Polyline>
-            ))}
+            {/* Proposed Well Proximity Circle */}
+            {proposedWell && (
+              <>
+                <Circle
+                  center={[proposedWell.lat, proposedWell.lon]}
+                  radius={searchRadiusKm * 1000}
+                  pathOptions={{
+                    color: '#A78BFA',
+                    weight: 1.5,
+                    fillOpacity: 0.04,
+                    dashArray: '4 6',
+                  }}
+                />
+                <Marker
+                  position={[proposedWell.lat, proposedWell.lon]}
+                  icon={proposedWellIcon}
+                >
+                  <Popup className="nwis-popup">
+                    <div className="p-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 font-bold text-xs mb-1" style={{ color: '#A78BFA' }}>
+                        <MapPin size={14} />
+                        PROPOSED WELL
+                      </div>
+                      <div className="text-xs text-slate-300 space-y-1">
+                        <div>Lat: <span className="font-mono">{proposedWell.lat.toFixed(4)}°N</span></div>
+                        <div>Lon: <span className="font-mono">{proposedWell.lon.toFixed(4)}°E</span></div>
+                        <div>Offsets in range: <strong>{proposedOffsetWells.length}</strong></div>
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              </>
+            )}
 
-            {/* Pore Pressure Risk Heatmap */}
-            {showPressure && activeWell && [1, 2, 3, 4, 5].map(idx => (
-              <Circle
-                key={`pressure-${idx}`}
-                center={[activeWell.lat, activeWell.lon]}
-                radius={idx * 1800}
-                pathOptions={{
-                  color: idx <= 2 ? '#F43F5E' : idx === 3 ? '#F59E0B' : idx === 4 ? '#EAB308' : '#10B981',
-                  fillColor: idx <= 2 ? '#F43F5E' : idx === 3 ? '#F59E0B' : idx === 4 ? '#EAB308' : '#10B981',
-                  fillOpacity: 0.15 / idx,
-                  stroke: false
-                }}
-              />
-            ))}
-
-                        {/* Offset Wells */}
+            {/* Offset Wells */}
             {offsetWellsInRadius.map((w) => {
               const distance = activeWell ? haversineKm(activeWell.lat, activeWell.lon, w.lat, w.lon) : 0
               const isRisky = riskyWellIds.has(w.id)
+              const proposedStyle = getProposedOffsetStyle(w)
+              const markerStyle = proposedStyle || getWellMarkerStyle(w)
               const wellAlerts = visibleAlerts.filter((a) => a.nearby_well_id === w.id)
-              const trajectory = getTrajectory(w)
 
               return (
-                <React.Fragment key={w.id}>
-                  {showTrajectories && (
-                    <Polyline
-                      positions={trajectory}
-                      pathOptions={{
-                        color: isRisky ? '#F59E0B' : '#38BDF8',
-                        weight: 2,
-                        dashArray: '4 8',
-                        opacity: 0.6
-                      }}
-                    />
-                  )}
-                  <Marker
-                    position={[w.lat, w.lon]}
-                    icon={getOffsetIcon(isRisky)}
-                    eventHandlers={{ click: () => setSelectedWell(w) }}
-                  >
-                    <Popup className="nwis-popup">
-                      <div className="p-1 min-w-[220px]">
-                        <div className="flex items-center justify-between pb-1.5 border-b border-hairline mb-2">
-                          <span className="font-bold text-xs text-primary-glow font-sans">{w.name}</span>
-                          <span className="text-[10px] text-text-muted font-mono">OFFSET</span>
-                        </div>
-                        <div className="text-xs text-slate-300 space-y-1">
-                          <div>Proximity: <strong className="text-foreground">{distance.toFixed(1)} km</strong></div>
-                          <div>Total Depth: <span className="font-mono">{w.total_depth_m}m</span></div>
-                          <div className="text-[11px] text-text-muted">{w.field_name}</div>
-                        </div>
-                        {isRisky && (
-                          <div className="mt-2.5 p-2 rounded-lg bg-danger/10 border border-danger/30 text-danger text-[11px] font-medium flex items-center gap-1.5">
-                            <AlertTriangle size={13} className="shrink-0" />
-                            <span>{wellAlerts.length} correlated hazard(s) at current horizon</span>
-                          </div>
-                        )}
-                        <div className="mt-2 text-right">
-                          <button
-                            onClick={() => setSelectedWell(w)}
-                            className="text-[10px] text-primary-glow hover:underline font-medium"
-                          >
-                            View Full Intelligence Ã¢â€ â€™
-                          </button>
-                        </div>
+                <CircleMarker
+                  key={w.id}
+                  center={[w.lat, w.lon]}
+                  radius={markerStyle.radius}
+                  eventHandlers={{
+                    click: () => setSelectedWell(w),
+                  }}
+                  pathOptions={{
+                    color: markerStyle.color,
+                    fillColor: markerStyle.fillColor,
+                    fillOpacity: markerStyle.fillOpacity,
+                    weight: markerStyle.weight,
+                  }}
+                >
+                  <Popup className="nwis-popup">
+                    <div className="p-1 min-w-[220px]">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-hairline mb-2">
+                        <span className="font-bold text-xs text-primary-glow font-sans">{w.name}</span>
+                        <span className="text-[10px] text-text-muted font-mono">
+                          {isProposedOffset(w) ? 'PROPOSED OFFSET' : 'OFFSET'}
+                        </span>
                       </div>
-                    </Popup>
-                  </Marker>
-                </React.Fragment>
-              )
-            })}
-                        {/* Active Drilling Well Marker */}
-            {activeWell && (
-              <Marker
-                position={[activeWell.lat, activeWell.lon]}
-                icon={activeWellIcon}
-                eventHandlers={{ click: () => setSelectedWell(activeWell) }}
-              >
-                <Popup className="nwis-popup">
-                  <div className="p-1 min-w-[200px]">
-                    <div className="flex items-center gap-2 font-bold text-xs text-accent mb-1">
-                      <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
-                      ACTIVE DRILLING TARGET
-                    </div>
-                    <div className="text-sm font-bold text-foreground">{activeWell.name}</div>
-                    <div className="text-xs text-text-muted mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
-                    <div className="text-xs text-text-muted">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
-                  </div>
-                </Popup>
-              </Marker>
-            )}
-          
-              {planningMode && (
-                <PlanningModeController 
-                  enabled={planningMode} 
-                  onPinDrop={(lat, lng) => setProposedWell({lat, lng})} 
-                />
-              )}
-
-              {proposedWell && (
-                <>
-                  <Circle
-                    center={[proposedWell.lat, proposedWell.lng]}
-                    radius={15 * 1000}
-                    pathOptions={{
-                      color: '#38BDF8',
-                      fillColor: '#38BDF8',
-                      fillOpacity: 0.05,
-                      dashArray: '5, 10',
-                      weight: 1
-                    }}
-                  />
-                  <Marker 
-                    position={[proposedWell.lat, proposedWell.lng]}
-                    icon={customProposedIcon}
-                  >
-                    <Popup className="nwis-popup">
-                      <div className="p-2 min-w-[240px]">
-                        <div className="flex items-center gap-2 font-bold text-xs text-accent mb-2 border-b border-hairline pb-2">
-                          <Target size={14} className="animate-pulse" />
-                          PROPOSED WELL TARGET
+                      <div className="text-xs text-slate-300 space-y-1">
+                        <div>Proximity: <strong className="text-foreground">{distance.toFixed(1)} km</strong></div>
+                        <div>Total Depth: <span className="font-mono">{w.total_depth_m}m</span></div>
+                        <div className="text-[11px] text-text-muted">{w.field_name}</div>
+                      </div>
+                      {isRisky && (
+                        <div className="mt-2.5 p-2 rounded-lg bg-danger/10 border border-danger/30 text-danger text-[11px] font-medium flex items-center gap-1.5">
+                          <AlertTriangle size={13} className="shrink-0" />
+                          <span>{wellAlerts.length} correlated hazard(s) at current horizon</span>
                         </div>
-                        <div className="text-xs text-slate-300 font-mono mb-1">LAT: {proposedWell.lat.toFixed(4)}Â°</div>
-                        <div className="text-xs text-slate-300 font-mono mb-3">LNG: {proposedWell.lng.toFixed(4)}Â°</div>
+                      )}
+                      <div className="mt-2 text-right">
                         <button
-                          onClick={async () => {
-                            setGeneratingPreSpud(true)
-                            const nearby = wells.filter(w => haversineKm(proposedWell.lat, proposedWell.lng, w.lat, w.lon) <= 15)
-                            try {
-                              const blob = await generateServerPdf({
-                                active_well_name: "PROPOSED TARGET (VIRTUAL)",
-                                current_depth_m: 0,
-                                formation: "Pre-Spud Estimation",
-                                overall_risk_state: "PRE-SPUD EVALUATION",
-                                overall_risk_probability: "N/A",
-                                overall_confidence: "95.0%",
-                                telemetry: {},
-                                predicted_risks: [
-                                  {
-                                    risk_type: "Offset Well Anomaly Proximity",
-                                    risk_class: nearby.length > 0 ? "HIGH" : "LOW",
-                                    risk_probability: 85,
-                                    confidence: 90,
-                                    contributing_factors: ["Geospatial Proximity", "Historical Offset Incidents", "Simulated Lithology"]
-                                  }
-                                ],
-                                nearby_wells: nearby.map(w => ({
-                                  name: w.name,
-                                  distance_km: haversineKm(proposedWell.lat, proposedWell.lng, w.lat, w.lon),
-                                  direction: "TBD",
-                                  total_depth_m: w.total_depth_m,
-                                  formation: "Assam Strata"
-                                }))
-                              })
-                              if (blob) {
-                                const url = window.URL.createObjectURL(blob)
-                                const a = document.createElement("a")
-                                a.href = url
-                                a.download = `NWIS_PreSpud_Dossier_Target.pdf`
-                                document.body.appendChild(a)
-                                a.click()
-                                window.URL.revokeObjectURL(url)
-                                document.body.removeChild(a)
-                              }
-                            } finally {
-                              setGeneratingPreSpud(false)
-                            }
-                          }}
-                          disabled={generatingPreSpud}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent/20 hover:bg-accent/40 text-accent font-semibold text-[11px] rounded-lg border border-accent/50 transition-colors"
+                          onClick={() => setSelectedWell(w)}
+                          className="text-[10px] text-primary-glow hover:underline font-medium"
                         >
-                          {generatingPreSpud ? "Compiling Dossier..." : "Generate Risk Dossier"}
+                          View Full Intelligence →
                         </button>
                       </div>
-                    </Popup>
-                  </Marker>
-                </>
-              )}
-            </MapContainer>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              )
+            })}
+
+            {/* Active Drilling Well Marker */}
+            {activeWell && (
+              <>
+                <CircleMarker
+                  center={[activeWell.lat, activeWell.lon]}
+                  radius={18}
+                  pathOptions={{ color: '#10B981', fillColor: '#10B981', fillOpacity: 0.18, weight: 1.5 }}
+                />
+                <CircleMarker
+                  center={[activeWell.lat, activeWell.lon]}
+                  radius={9}
+                  eventHandlers={{
+                    click: () => setSelectedWell(activeWell),
+                  }}
+                  pathOptions={{ color: '#FFFFFF', fillColor: '#10B981', fillOpacity: 1, weight: 2.5 }}
+                >
+                  <Popup className="nwis-popup">
+                    <div className="p-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 font-bold text-xs text-accent mb-1">
+                        <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                        ACTIVE DRILLING TARGET
+                      </div>
+                      <div className="text-sm font-bold text-foreground">{activeWell.name}</div>
+                      <div className="text-xs text-text-muted mt-1">Current Depth: <strong className="text-foreground font-mono">{currentDepth.toFixed(0)}m MD</strong></div>
+                      <div className="text-xs text-text-muted">Target Depth: <span className="font-mono">{activeWell.total_depth_m}m</span></div>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              </>
+            )}
+          </MapContainer>
         )}
       </div>
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Slide-Over Well Intelligence Inspector Drawer Ã¢â€â‚¬Ã¢â€â‚¬ */}
+      {/* ── Phase 4: Time to Hazard Panel ── */}
+      {upcomingHazards.length > 0 && (
+        <div className="absolute top-20 left-5 sm:left-6 z-[1100] pointer-events-auto print-hide">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel border border-hairline-light rounded-2xl shadow-2xl p-4 w-[300px]"
+          >
+            <div className="flex items-center gap-2 pb-3 border-b border-hairline mb-3">
+              <Clock size={16} className="text-warning" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider">Time to Hazard</span>
+              <span className="ml-auto text-[10px] font-mono text-text-muted">ROP: {currentTelemetry.ropMh} m/hr</span>
+            </div>
+
+            <div className="space-y-3">
+              {upcomingHazards.map((h, idx) => (
+                <div key={`${h.alert.id}-${idx}`} className={`p-3 rounded-xl glass-card text-xs space-y-2 ${h.isUrgent ? 'hazard-flash border border-danger/40' : 'border border-hairline/50'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      h.alert.severity === 'CRITICAL' ? 'badge-critical' : h.alert.severity === 'HIGH' ? 'badge-high' : 'badge-medium'
+                    }`}>
+                      {h.alert.severity}
+                    </span>
+                    <span className="font-mono text-text-muted text-[11px]">{h.alert.matched_depth_m}m MD</span>
+                  </div>
+
+                  <div className="text-foreground font-semibold text-[11px]">{eventLabel(h.alert.event_type)}</div>
+
+                  <div className="flex items-center gap-3 text-[10px] text-text-muted">
+                    <span>⬇ <strong className="text-foreground">{h.metresToGo.toFixed(0)}m</strong> to go</span>
+                    <span>⏱ <strong className={h.isUrgent ? 'text-danger' : 'text-foreground'}>{h.timeBestEst}</strong></span>
+                    <span className="text-text-dim">({h.timeMinEst}–{h.timeMaxEst})</span>
+                  </div>
+
+                  {/* Progress bar colored by severity */}
+                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        h.alert.severity === 'CRITICAL' ? 'bg-danger' : h.alert.severity === 'HIGH' ? 'bg-warning' : 'bg-primary'
+                      }`}
+                      style={{ width: `${h.progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── Slide-Over Well Intelligence Inspector Drawer ── */}
       <AnimatePresence>
-        {selectedWell && (
+        {selectedWell && !proposedWellPanelOpen && (
           <motion.div
             initial={{ opacity: 0, x: 340 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 340 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="absolute top-20 right-5 sm:right-6 bottom-24 w-full max-w-[420px] glass-panel border-hairline-light rounded-2xl shadow-2xl p-6 z-[1500] flex flex-col overflow-hidden"
+            className="absolute top-20 right-5 sm:right-6 bottom-24 w-full max-w-[420px] glass-panel border-hairline-light rounded-2xl shadow-2xl p-6 z-[1500] flex flex-col overflow-hidden print-hide"
           >
             <div className="flex items-start justify-between pb-3.5 border-b border-hairline">
               <div>
@@ -646,7 +878,7 @@ export default function TacticalMap() {
                 <div className="p-3 rounded-xl glass-card col-span-2">
                   <div className="text-[10px] text-text-muted">Geospatial Coordinates</div>
                   <div className="font-mono text-xs text-slate-300">
-                    {selectedWell.lat.toFixed(4)}Ã‚Â°N, {selectedWell.lon.toFixed(4)}Ã‚Â°E
+                    {selectedWell.lat.toFixed(4)}°N, {selectedWell.lon.toFixed(4)}°E
                   </div>
                 </div>
               </div>
@@ -702,49 +934,179 @@ export default function TacticalMap() {
         )}
       </AnimatePresence>
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Floating Layer Control Panel Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <div className="absolute bottom-28 left-5 sm:bottom-28 sm:left-6 z-[1000] glass px-4 py-3 rounded-2xl shadow-xl flex flex-col gap-2.5 pointer-events-auto w-48">
-        <div className="text-[10px] text-text-muted font-mono uppercase tracking-wider mb-1 flex items-center gap-1.5 border-b border-hairline pb-2">
-          <Layers size={12} className="text-primary-glow" /> 
-          Tactical Layers
-        </div>
-        {[
-          { label: 'Fault Lines', state: showFaults, set: setShowFaults },
-          { label: 'Trajectories', state: showTrajectories, set: setShowTrajectories },
-          { label: 'Pore Pressure', state: showPressure, set: setShowPressure },
-          { label: 'Proximity Grid', state: showProximity, set: setShowProximity }
-        ].map(l => (
-          <label key={l.label} className="flex items-center justify-between cursor-pointer group">
-            <span className="text-xs text-foreground font-medium group-hover:text-primary-glow transition-colors">{l.label}</span>
-            <input 
-              type="checkbox" 
-              checked={l.state} 
-              onChange={e => l.set(e.target.checked)} 
-              className="accent-primary w-3.5 h-3.5 cursor-pointer rounded-sm bg-panel border-hairline"
-            />
-          </label>
-        ))}
+      {/* ── Phase 1: Proposed Well Side Panel ── */}
+      <AnimatePresence>
+        {proposedWell && proposedWellPanelOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 400 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 400 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+            className="absolute top-5 right-5 sm:right-6 bottom-24 w-full max-w-[440px] glass-panel border border-hairline-light rounded-2xl shadow-2xl z-[1500] flex flex-col overflow-hidden print-panel"
+          >
+            {/* Header */}
+            <div className="p-5 pb-3.5 border-b border-hairline flex items-start justify-between shrink-0">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-accent-warm/15 text-accent-warm border border-accent-warm/30">
+                    Proposed Well
+                  </span>
+                  <span className="text-[10px] font-mono text-text-muted">
+                    {proposedOffsetWells.length} offsets in range
+                  </span>
+                </div>
+                <h3 className="font-sans font-bold text-lg text-foreground">PROPOSED WELL</h3>
+                <p className="text-xs text-text-muted font-mono">
+                  {proposedWell.lat.toFixed(4)}°N, {proposedWell.lon.toFixed(4)}°E
+                </p>
+              </div>
+              <button
+                onClick={() => { setProposedWellPanelOpen(false); setProposedWell(null) }}
+                className="p-1.5 rounded-lg text-text-muted hover:text-foreground hover:glass-card transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-        <div className="text-[10px] text-text-muted font-mono uppercase tracking-wider mb-1 mt-2 flex items-center gap-1.5 border-b border-hairline pb-2">
-          <Compass size={12} className="text-accent" /> 
-          Intelligence Tools
-        </div>
-        <label className="flex items-center justify-between cursor-pointer group">
-          <span className="text-xs text-accent font-medium group-hover:text-primary-glow transition-colors">Pre-Spud Mode</span>
-          <input 
-            type="checkbox" 
-            checked={planningMode}
-            onChange={(e) => {
-              setPlanningMode(e.target.checked)
-              if (!e.target.checked) setProposedWell(null)
-            }}
-            className="accent-accent w-3.5 h-3.5 cursor-pointer rounded-sm bg-panel border-hairline"
-          />
-        </label>
-      </div>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 pr-3">
 
-      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Sleek Bottom Horizon Scrubber & Depth Control Dock Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 z-[1000] flex justify-center pointer-events-none">
+              {/* Section 1: Expected Formation Tops */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Layers size={14} className="text-primary-glow" />
+                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Expected Formation Tops</span>
+                </div>
+                <div className="space-y-1.5">
+                  {expectedFormationTops.map((f, idx) => (
+                    <div key={idx} className="p-3 rounded-xl glass-card text-xs flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-semibold text-foreground text-[11px]">{f.name}</div>
+                        <div className="text-text-muted text-[10px] mt-0.5">{f.lithology}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-mono text-foreground text-[11px] font-bold">{f.expectedTopM}–{f.expectedBottomM}m</div>
+                        <div className="text-[10px] text-text-muted">{f.hazards[0]}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 2: Historical Trouble Depths */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle size={14} className="text-warning" />
+                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Historical Trouble Depths</span>
+                </div>
+                {troubleDepthBands.length === 0 ? (
+                  <div className="p-4 rounded-xl glass-card text-center text-xs text-text-muted">
+                    No offset incident data available in range.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {troubleDepthBands.map((band, idx) => (
+                      <div key={idx} className="p-3 rounded-xl glass-card text-xs flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${
+                            band.event_type === 'kick' || band.event_type === 'overpressure' ? 'bg-danger' :
+                            band.event_type === 'mud_loss' ? 'bg-warning' :
+                            band.event_type === 'stuck_pipe' ? 'bg-accent-warm' : 'bg-primary'
+                          }`} />
+                          <div>
+                            <div className="font-semibold text-foreground text-[11px]">{eventLabel(band.event_type)}</div>
+                            <div className="text-[10px] text-text-muted">{band.depthBand}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-mono text-foreground text-[11px] font-bold">{band.count} events</div>
+                          <div className="text-[10px] text-text-muted">nearest: {band.nearestDistanceKm.toFixed(1)} km</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Section 3: Suggested Casing & Mud Program */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wrench size={14} className="text-accent" />
+                  <span className="text-xs font-bold text-foreground uppercase tracking-wider">Suggested Casing & Mud Program</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-warning/10 border border-warning/20 text-[10px] text-warning font-medium mb-3 flex items-center gap-2">
+                  <AlertTriangle size={12} className="shrink-0" />
+                  <span>Analog suggestion, engineer approval required</span>
+                </div>
+
+                {/* Casing */}
+                {proposedWellCasing.casing.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Casing Program (Nearest Analog)</div>
+                    <div className="space-y-1">
+                      {proposedWellCasing.casing.slice(0, 4).map((c, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg glass-card text-[11px] flex justify-between">
+                          <div>
+                            <span className="text-foreground font-semibold">{c.hole_section}</span>
+                            <span className="text-text-muted ml-2">{c.casing_size_in}" / {c.hole_size_in}" hole</span>
+                          </div>
+                          <span className="font-mono text-foreground">{c.setting_depth_m}m</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mud */}
+                {proposedWellMud.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Mud Properties (Nearest Analog)</div>
+                    <div className="space-y-1">
+                      {proposedWellMud.slice(0, 3).map((m, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg glass-card text-[11px] flex justify-between">
+                          <div>
+                            <span className="text-foreground font-semibold">{m.mud_type}</span>
+                            <span className="text-text-muted ml-2">{m.formation}</span>
+                          </div>
+                          <span className="font-mono text-foreground">{m.mud_weight_sg} SG</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer with Pre-Spud Brief download */}
+            <div className="p-5 pt-3 border-t border-hairline flex items-center justify-between shrink-0">
+              <button
+                onClick={() => { setProposedWellPanelOpen(false); setProposedWell(null) }}
+                className="px-3.5 py-1.5 rounded-xl glass-card hover:bg-panel-hover text-foreground font-medium text-xs border border-hairline transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={handlePreSpudDownload}
+                disabled={generatingPreSpud}
+                className="flex items-center gap-2 px-4 py-2 bg-accent-warm text-white font-semibold text-xs rounded-xl hover:brightness-110 transition-all shadow-sm disabled:opacity-50"
+              >
+                {generatingPreSpud ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} /> Download Pre-Spud Brief
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sleek Bottom Horizon Scrubber & Depth Control Dock ── */}
+      <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 z-[1000] flex justify-center pointer-events-none print-hide">
         <div className="pointer-events-auto glass px-6 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center gap-5 max-w-4xl w-full">
           {/* Play / Pause & Speed Controls */}
           <div className="flex items-center gap-2">
