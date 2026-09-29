@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Activity,
@@ -15,7 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   Sliders,
-  RotateCcw,
+  RotateCcw, ShieldAlert,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -98,7 +98,7 @@ export default function Telemetry() {
   return (
     <div className="w-full select-none">
       <div className="page-container space-y-8">
-        {/* ── Top Header & Depth Controls ── */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬ Top Header & Depth Controls Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-hairline">
           <div>
             <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ export default function Telemetry() {
           </div>
         </div>
 
-      {/* ── Level 1: Operational Status Card (What is happening right now?) ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Level 1: Operational Status Card (What is happening right now?) Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className={`p-5 sm:p-6 rounded-2xl border transition-all duration-500 ${
         isHighRisk
           ? 'bg-danger/8 border-danger/20 text-slate-100 glow-danger'
@@ -216,7 +216,7 @@ export default function Telemetry() {
         </div>
       </div>
 
-      {/* ── Level 2: 6 Primary Readable KPI Cards ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Level 2: 6 Primary Readable KPI Cards Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="space-y-3">
         <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
           Core Drilling Dynamics (Key Parameters)
@@ -336,7 +336,59 @@ export default function Telemetry() {
         </div>
       </div>
 
-      {/* ── Level 3: Time-Series Trend Charts ── */}
+      {/* Innovation #1: Automated Safe Operating Envelope (MWW) */}
+
+      <div className="p-6 sm:p-8 rounded-2xl glass-card flex flex-col md:flex-row items-center gap-6 shadow-[0_0_20px_rgba(56,189,248,0.05)] border border-accent/30 bg-accent/5">
+  <div className="flex-1">
+    <div className="inline-block px-2.5 py-1 rounded-full bg-accent/20 border border-accent/40 text-[10px] font-bold text-accent tracking-widest mb-3">INNOVATION FEATURE 1</div>
+    <h3 className="font-sans font-bold text-lg text-foreground mb-1.5 flex items-center gap-2.5">
+      <ShieldAlert size={20} className="text-accent" />
+      Real-Time Safe Mud-Weight Window
+    </h3>
+    <p className="text-xs text-slate-300 max-w-lg leading-relaxed">
+      Derived dynamically from virtual offset casing/cementing records. This operating envelope calculates precise margins between Formation Pore Pressure (PP) and Fracture Gradient (FG).
+    </p>
+  </div>
+  <div className="w-full md:w-[450px] flex flex-col gap-2">
+    <div className="flex justify-between text-[10px] font-mono text-text-muted px-1">
+      <span>COLLAPSE RISK (PP)</span>
+      <span>FRACTURE RISK (FG)</span>
+    </div>
+    <div className="h-7 w-full rounded-full bg-slate-900 border border-hairline relative overflow-hidden flex shadow-inner">
+      {/* Left danger zone (Underbalance / Collapse) */}
+      <div 
+        className="h-full bg-danger/20 border-r border-danger/50 transition-all duration-500"
+        style={{ width: `${((telemetry?.pore_pressure_sg || 1.1) / 2.0) * 100}%` }}
+      />
+      {/* Safe Operating Window */}
+      <div 
+        className="h-full bg-accent/20 border-r border-warning/50 relative flex items-center justify-center transition-all duration-500"
+        style={{ width: `${(((telemetry?.fracture_gradient_sg || 1.4) - (telemetry?.pore_pressure_sg || 1.1)) / 2.0) * 100}%` }}
+      >
+        <div className="text-[10px] font-bold text-accent/60 tracking-wider">SAFE ZONE</div>
+      </div>
+      {/* Right danger zone (Overbalance / Fracturing) */}
+      <div 
+        className="h-full bg-warning/20 transition-all duration-500 flex-1"
+      />
+      {/* Current Live Mud Weight Indicator */}
+      <div 
+        className="absolute top-0 bottom-0 w-1 bg-white rounded-full shadow-[0_0_12px_rgba(255,255,255,1)] transition-all duration-500 z-10"
+        style={{ left: `calc(${((telemetry?.mud_weight_sg || 1.25) / 2.0) * 100}% - 2px)` }}
+      />
+    </div>
+    <div className="flex justify-between items-center text-xs font-mono font-semibold px-1 mt-1">
+      <span className="text-danger">{telemetry?.pore_pressure_sg?.toFixed(2) || '1.10'} SG</span>
+      <span className="text-white bg-slate-800 px-2.5 py-1 rounded-md border border-white/20 text-[11px] shadow-lg flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+        MW: {telemetry?.mud_weight_sg?.toFixed(2) || '1.25'} SG
+      </span>
+      <span className="text-warning">{telemetry?.fracture_gradient_sg?.toFixed(2) || '1.40'} SG</span>
+    </div>
+  </div>
+</div>
+
+      {/* ? Level 3: Time-Series Trend Charts ? */}
       <div className="p-6 sm:p-8 rounded-2xl bg-panel-card border border-hairline space-y-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
           <div>
@@ -412,7 +464,7 @@ export default function Telemetry() {
         </div>
       </div>
 
-      {/* ── Level 4: Progressive Disclosure (Collapsible Raw Sensor Logs & Mud Rheology) ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ Level 4: Progressive Disclosure (Collapsible Raw Sensor Logs & Mud Rheology) Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="border border-hairline rounded-2xl bg-panel-card overflow-hidden shadow-sm">
         <button
           onClick={() => setShowRawLogs(!showRawLogs)}
@@ -424,7 +476,7 @@ export default function Telemetry() {
               Engineering Diagnostics & Mud Rheology Specifications
             </span>
             <span className="text-xs text-text-muted font-mono">
-              ({currentMud?.mud_type || 'KCL-Polymer Water-Based Mud'} · {currentMud?.mud_weight_sg || 1.18} SG)
+              ({currentMud?.mud_type || 'KCL-Polymer Water-Based Mud'} Ã‚Â· {currentMud?.mud_weight_sg || 1.18} SG)
             </span>
           </div>
 
@@ -459,7 +511,7 @@ export default function Telemetry() {
                 </div>
                 <div className="p-4 rounded-xl bg-panel border border-hairline">
                   <div className="text-[11px] text-text-muted">Yield Point (YP)</div>
-                  <div className="font-mono font-bold text-foreground mt-1 text-sm">{currentMud?.yield_point_lbf_100sqft || 22} lb/100ft²</div>
+                  <div className="font-mono font-bold text-foreground mt-1 text-sm">{currentMud?.yield_point_lbf_100sqft || 22} lb/100ftÃ‚Â²</div>
                 </div>
               </div>
 

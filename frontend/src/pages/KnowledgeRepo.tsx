@@ -179,16 +179,19 @@ export default function KnowledgeRepo() {
   }
 
   return (
-    <div className="w-full select-none">
-      <div className="page-container space-y-8">
+    <div className="w-full select-none relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900/50 via-black to-black min-h-screen">
+      {/* Background Neural Grid / Cyber Texture Overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.5)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+      
+      <div className="page-container space-y-8 relative z-10 p-4 sm:p-8">
         {/* ── Top Header ── */}
         <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-hairline">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-sans">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-sans drop-shadow-md">
                 Document Intelligence Workspace
               </h1>
-              <span className="text-xs px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary-glow font-medium flex items-center gap-1.5">
+              <span className="text-xs px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary-glow font-medium flex items-center gap-1.5 shadow-[0_0_10px_rgba(56,189,248,0.15)]">
                 <Sparkles size={13} />
                 NLP Knowledge Base
               </span>
@@ -201,7 +204,7 @@ export default function KnowledgeRepo() {
           <button
             onClick={handleSimulateNLP}
             disabled={isProcessingNLP}
-            className="flex items-center gap-2 px-5 py-2.5 glass-card hover:bg-panel-hover border border-hairline text-foreground rounded-xl text-xs font-medium transition-colors shadow-sm cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 border border-primary-glow bg-primary-glow/10 text-primary-glow rounded-xl text-xs font-medium transition-all hover:shadow-[0_0_15px_rgba(56,189,248,0.5)] hover:bg-primary-glow/20 cursor-pointer backdrop-blur-sm"
           >
             {isProcessingNLP ? (
               <>
@@ -217,14 +220,13 @@ export default function KnowledgeRepo() {
 
         {/* ── Main Two-Column Document Intelligence Workspace ── */}
         <div className="flex flex-col lg:flex-row gap-8 items-stretch">
-          {/* Left Column: Document Browser (Enlarged Width & Ample Padding) */}
-          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col glass-card rounded-2xl overflow-hidden shrink-0 shadow-sm">
+          {/* Left Column: Document Browser */}
+          <div className="w-full lg:w-[420px] xl:w-[460px] flex flex-col glass-card rounded-2xl overflow-hidden shrink-0 shadow-sm backdrop-blur-md bg-slate-900/40 border border-hairline">
             {/* Search Box & Filters */}
             <div className="p-6 border-b border-hairline space-y-4">
               <div className="relative flex items-center">
-                {/* Search Icon with Guaranteed Separation */}
                 <div className="absolute left-4 pointer-events-none flex items-center justify-center text-text-muted">
-                  <Search size={16} />
+                  <Search size={16} className="text-primary-glow" />
                 </div>
                 <input
                   type="text"
@@ -232,7 +234,7 @@ export default function KnowledgeRepo() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ paddingLeft: '3.25rem' }}
-                  className="w-full bg-panel border border-hairline rounded-xl pr-4 py-2.5 text-xs sm:text-sm text-foreground placeholder:text-text-muted/60 outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all shadow-inner"
+                  className="w-full bg-black/50 border border-hairline rounded-xl pr-4 py-2.5 text-xs sm:text-sm text-foreground placeholder:text-text-muted/60 outline-none focus:border-primary-glow focus:ring-1 focus:ring-primary-glow/30 transition-all shadow-inner backdrop-blur-sm"
                 />
               </div>
 
@@ -244,8 +246,8 @@ export default function KnowledgeRepo() {
                     onClick={() => setSelectedCategory(cat)}
                     className={`text-[11px] px-3.5 py-1.5 rounded-lg shrink-0 font-medium transition-all ${
                       selectedCategory === cat
-                        ? 'bg-primary text-white shadow-xs'
-                        : 'text-text-muted glass-subtle hover:text-foreground hover:bg-white/[0.06]'
+                        ? 'bg-primary text-white shadow-[0_0_10px_rgba(56,189,248,0.3)] border border-primary-glow/50'
+                        : 'text-text-muted glass-subtle hover:text-foreground hover:bg-white/[0.06] border border-transparent'
                     }`}
                   >
                     {cat === 'Daily Drilling Report' ? 'DDR' : cat === 'Incident Investigation Report' ? 'Incident' : cat === 'End of Well Report' ? 'EOWR' : 'All'}
@@ -254,7 +256,7 @@ export default function KnowledgeRepo() {
               </div>
             </div>
 
-            {/* Document Items List with Generous Left Space from Border */}
+            {/* Document Items List */}
             <div className="p-4 space-y-3 flex-1 overflow-y-auto min-h-[480px] max-h-[640px]">
               {filteredDocs.map((doc) => {
                 const isSelected = selectedDoc.id === doc.id
@@ -262,16 +264,16 @@ export default function KnowledgeRepo() {
                   <div
                     key={doc.id}
                     onClick={() => setSelectedDoc(doc)}
-                    className={`p-5 pl-7 rounded-xl cursor-pointer transition-all border relative overflow-hidden ${
+                    className={`p-5 pl-7 rounded-xl cursor-pointer transition-all border relative overflow-hidden backdrop-blur-sm ${
                       isSelected
-                        ? 'bg-panel-hover border-primary-glow/60 shadow-md ring-1 ring-primary-glow/30 border-l-4 border-l-primary-glow'
-                        : 'border-hairline bg-panel hover:glass-card hover:border-hairline-light'
+                        ? 'bg-primary-glow/5 border-primary-glow/60 shadow-[inset_0_0_15px_rgba(56,189,248,0.1)] ring-1 ring-primary-glow/30 border-l-4 border-l-primary-glow'
+                        : 'border-hairline bg-black/20 hover:bg-black/40 hover:border-hairline-light'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-bold text-xs sm:text-sm text-foreground font-sans truncate">{doc.name}</span>
                       <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
-                        doc.severity === 'CRITICAL' ? 'badge-critical' : doc.severity === 'HIGH' ? 'badge-high' : 'badge-low'
+                        doc.severity === 'CRITICAL' ? 'badge-critical shadow-[0_0_8px_rgba(239,68,68,0.4)]' : doc.severity === 'HIGH' ? 'badge-high shadow-[0_0_8px_rgba(249,115,22,0.4)]' : 'badge-low shadow-[0_0_8px_rgba(34,197,94,0.4)]'
                       }`}>
                         {doc.severity}
                       </span>
@@ -290,19 +292,19 @@ export default function KnowledgeRepo() {
           </div>
 
           {/* Right Column: Structured Document Intelligence View */}
-          <div className="flex-1 w-full flex flex-col glass-card rounded-2xl p-7 sm:p-9 space-y-8 shadow-sm overflow-hidden min-h-[640px]">
+          <div className="flex-1 w-full flex flex-col backdrop-blur-xl bg-slate-900/40 border border-primary-glow/20 rounded-2xl p-7 sm:p-9 space-y-8 shadow-[inset_0_0_30px_rgba(56,189,248,0.05),0_0_20px_rgba(0,0,0,0.5)] overflow-hidden min-h-[640px]">
             {/* Header of Active Document */}
-            <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-hairline">
+            <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-primary-glow/20">
               <div className="space-y-2.5">
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary-glow">
+                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-primary/10 border border-primary-glow/50 text-primary-glow shadow-[0_0_8px_rgba(56,189,248,0.2)]">
                     {selectedDoc.type}
                   </span>
                   <span className="text-xs text-text-muted font-mono">
-                    Extraction Confidence: <strong className="text-accent">{(selectedDoc.confidence * 100).toFixed(0)}% Macro-F1</strong>
+                    Extraction Confidence: <strong className="text-primary-glow drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]">{(selectedDoc.confidence * 100).toFixed(0)}% Macro-F1</strong>
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-sans">{selectedDoc.name}</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-sans drop-shadow-sm">{selectedDoc.name}</h2>
                 <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-text-muted">
                   <span>Well: <strong className="text-foreground">{selectedDoc.well}</strong></span>
                   <span>·</span>
@@ -312,60 +314,66 @@ export default function KnowledgeRepo() {
                 </div>
               </div>
 
-              <span className={`text-xs font-bold px-4 py-2 rounded-full ${
-                selectedDoc.severity === 'CRITICAL' ? 'badge-critical' : selectedDoc.severity === 'HIGH' ? 'badge-high' : 'badge-low'
+              <span className={`text-xs font-bold px-4 py-2 rounded-full border ${
+                selectedDoc.severity === 'CRITICAL' ? 'badge-critical border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : selectedDoc.severity === 'HIGH' ? 'badge-high border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.3)]' : 'badge-low border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.3)]'
               }`}>
                 {selectedDoc.event} ({selectedDoc.severity})
               </span>
             </div>
 
-            {/* Level 1: What happened & Why it matters (Layman / Executive language with ample left breathing room) */}
+            {/* Level 1: What happened & Why it matters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 sm:p-7 pl-7 sm:pl-8 rounded-2xl bg-panel border border-hairline space-y-3 shadow-xs">
-                <div className="text-xs font-semibold text-primary-glow uppercase tracking-wider flex items-center gap-2">
+              <div className="p-6 sm:p-7 pl-7 sm:pl-8 rounded-2xl bg-primary/5 border-l-4 border-l-primary-glow border-t-hairline border-r-hairline border-b-hairline shadow-[inset_0_0_20px_rgba(56,189,248,0.05)] space-y-3 backdrop-blur-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                  <BookOpen size={64} />
+                </div>
+                <div className="text-xs font-semibold text-primary-glow uppercase tracking-wider flex items-center gap-2 drop-shadow-[0_0_5px_rgba(56,189,248,0.3)]">
                   <BookOpen size={16} />
                   <span>What Happened (Operational Summary)</span>
                 </div>
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                <p className="text-sm text-slate-200 leading-relaxed font-normal relative z-10">
                   {selectedDoc.executiveSummary}
                 </p>
               </div>
 
-              <div className="p-6 sm:p-7 pl-7 sm:pl-8 rounded-2xl bg-panel border border-hairline space-y-3 shadow-xs">
-                <div className="text-xs font-semibold text-warning uppercase tracking-wider flex items-center gap-2">
+              <div className="p-6 sm:p-7 pl-7 sm:pl-8 rounded-2xl bg-warning/5 border-l-4 border-l-warning border-t-hairline border-r-hairline border-b-hairline shadow-[inset_0_0_20px_rgba(245,158,11,0.05)] space-y-3 backdrop-blur-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                  <ShieldAlert size={64} />
+                </div>
+                <div className="text-xs font-semibold text-warning uppercase tracking-wider flex items-center gap-2 drop-shadow-[0_0_5px_rgba(245,158,11,0.3)]">
                   <ShieldAlert size={16} />
                   <span>Why It Matters (Risk Consequence)</span>
                 </div>
-                <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                <p className="text-sm text-slate-200 leading-relaxed font-normal relative z-10">
                   {selectedDoc.whyItMatters}
                 </p>
               </div>
             </div>
 
-            {/* Level 2: Extracted Key Entities & Recommended Mitigation with ample left space */}
-            <div className="p-7 sm:p-8 pl-8 sm:pl-9 rounded-2xl bg-panel border border-hairline space-y-6 shadow-xs">
-              <div className="flex items-center justify-between pb-3.5 border-b border-hairline/80">
+            {/* Level 2: Extracted Key Entities & Recommended Mitigation */}
+            <div className="p-7 sm:p-8 pl-8 sm:pl-9 rounded-2xl bg-black/30 border border-primary-glow/10 space-y-6 shadow-[inset_0_0_15px_rgba(0,0,0,0.4)] backdrop-blur-md">
+              <div className="flex items-center justify-between pb-3.5 border-b border-primary-glow/20">
                 <div className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2.5">
-                  <Sparkles size={16} className="text-accent" />
+                  <Sparkles size={16} className="text-primary-glow drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]" />
                   <span>Extracted NER Intelligence Entities</span>
                 </div>
-                <span className="text-[11px] text-text-muted font-mono">Assam LithoNER Grounded</span>
+                <span className="text-[11px] text-primary-glow/60 font-mono">Assam LithoNER Grounded</span>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 {selectedDoc.entities.map((ent, i) => (
                   <div
                     key={i}
-                    className="px-4.5 py-2.5 rounded-xl glass-card text-xs flex items-center gap-2.5 shadow-xs"
+                    className="px-4.5 py-2.5 rounded-xl border border-primary-glow/50 bg-primary-glow/10 text-primary-glow shadow-[0_0_10px_rgba(56,189,248,0.2)] text-xs flex items-center gap-2.5 backdrop-blur-sm"
                   >
-                    <span className="text-[10px] text-text-muted font-mono uppercase font-semibold">{ent.label}:</span>
-                    <span className="font-semibold text-foreground">{ent.value}</span>
+                    <span className="text-[10px] opacity-70 font-mono uppercase font-semibold">{ent.label}:</span>
+                    <span className="font-semibold text-white drop-shadow-sm">{ent.value}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="p-5 sm:p-6 pl-7 sm:pl-8 rounded-xl glass-card/80 space-y-2">
-                <div className="text-xs font-semibold text-accent flex items-center gap-2">
+              <div className="p-5 sm:p-6 pl-7 sm:pl-8 rounded-xl bg-primary/5 border border-primary/20 space-y-2 backdrop-blur-sm">
+                <div className="text-xs font-semibold text-primary-glow flex items-center gap-2 drop-shadow-[0_0_5px_rgba(56,189,248,0.3)]">
                   <CheckCircle2 size={16} />
                   <span>Executed Mitigation Action</span>
                 </div>
@@ -376,16 +384,16 @@ export default function KnowledgeRepo() {
             </div>
 
             {/* Level 3: Expandable Raw Engineering Transcript */}
-            <div className="border border-hairline rounded-2xl bg-panel overflow-hidden shadow-xs">
+            <div className="border border-primary-glow/20 rounded-2xl bg-black/40 overflow-hidden shadow-[0_0_15px_rgba(0,0,0,0.3)] backdrop-blur-md">
               <button
                 onClick={() => setShowRawText(!showRawText)}
-                className="w-full p-5 pl-7 sm:pl-8 flex items-center justify-between text-left hover:bg-panel-hover transition-colors cursor-pointer"
+                className="w-full p-5 pl-7 sm:pl-8 flex items-center justify-between text-left hover:bg-primary-glow/5 transition-colors cursor-pointer"
               >
-                <span className="text-xs sm:text-sm font-semibold text-text-muted flex items-center gap-2.5">
+                <span className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-2.5">
                   <FileText size={16} className="text-primary-glow" />
                   Original Scanned Text & OCR Raw Output
                 </span>
-                <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
+                <div className="flex items-center gap-2 text-xs text-primary-glow/70 font-medium">
                   <span>{showRawText ? 'Hide' : 'Show'} raw report</span>
                   {showRawText ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
@@ -398,7 +406,7 @@ export default function KnowledgeRepo() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="border-t border-hairline p-6 pl-8 bg-black/40 font-mono text-xs text-slate-300 leading-relaxed"
+                    className="border-t border-primary-glow/20 p-6 pl-8 bg-black/60 font-mono text-xs text-primary-glow/80 leading-relaxed"
                   >
                     {selectedDoc.text}
                   </motion.div>
@@ -409,12 +417,12 @@ export default function KnowledgeRepo() {
         </div>
 
         {/* ── Subsurface Knowledge Base Corpus & Correlation Matrix ── */}
-        <div className="glass-card rounded-2xl p-7 sm:p-8 space-y-5 shadow-sm">
+        <div className="backdrop-blur-md bg-slate-900/40 border border-hairline rounded-2xl p-7 sm:p-8 space-y-5 shadow-[0_0_20px_rgba(0,0,0,0.3)] relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-hairline">
             <div>
               <div className="flex items-center gap-2.5">
-                <Database size={18} className="text-primary-glow" />
-                <h3 className="font-grotesk font-bold text-base text-foreground">
+                <Database size={18} className="text-primary-glow drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]" />
+                <h3 className="font-grotesk font-bold text-base text-foreground drop-shadow-sm">
                   Assam Basin Offset Incident Corpus & Lithological Index
                 </h3>
               </div>
@@ -422,14 +430,14 @@ export default function KnowledgeRepo() {
                 Cataloged historical offset well files indexed into the eRTMAC-NWIS unstructured document retrieval pipeline.
               </p>
             </div>
-            <span className="text-xs px-3.5 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent font-medium">
+            <span className="text-xs px-3.5 py-1 rounded-full bg-primary-glow/10 border border-primary-glow/30 text-primary-glow font-medium shadow-[0_0_10px_rgba(56,189,248,0.15)]">
               5 Verified Records · LithoNER Pipeline Active
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-hairline">
+          <div className="overflow-x-auto rounded-xl border border-hairline bg-black/40">
             <table className="w-full text-left font-mono text-xs">
-              <thead className="bg-panel text-text-muted border-b border-hairline text-[11px]">
+              <thead className="bg-black/60 text-text-muted border-b border-hairline text-[11px]">
                 <tr>
                   <th className="p-4 pl-6">DOCUMENT ID / FILE</th>
                   <th className="p-4">WELL</th>
@@ -448,7 +456,7 @@ export default function KnowledgeRepo() {
                       key={doc.id}
                       onClick={() => setSelectedDoc(doc)}
                       className={`cursor-pointer transition-colors ${
-                        isSelected ? 'bg-panel-hover text-foreground font-medium' : 'hover:bg-panel/40'
+                        isSelected ? 'bg-primary-glow/10 text-foreground font-medium' : 'hover:bg-primary-glow/5'
                       }`}
                     >
                       <td className="p-4 pl-6 font-mono text-xs font-semibold text-foreground flex items-center gap-2">
@@ -456,12 +464,12 @@ export default function KnowledgeRepo() {
                         <span className="truncate max-w-[220px]">{doc.name}</span>
                       </td>
                       <td className="p-4 font-mono text-xs text-slate-200">{doc.well}</td>
-                      <td className="p-4 text-primary-glow font-medium">{doc.event}</td>
+                      <td className="p-4 text-primary-glow font-medium drop-shadow-[0_0_3px_rgba(56,189,248,0.3)]">{doc.event}</td>
                       <td className="p-4 text-text-muted">{doc.formation}</td>
                       <td className="p-4 font-mono text-xs font-bold text-foreground">{doc.depth}m MD</td>
                       <td className="p-4">
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                          doc.severity === 'CRITICAL' ? 'badge-critical' : doc.severity === 'HIGH' ? 'badge-high' : 'badge-low'
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          doc.severity === 'CRITICAL' ? 'badge-critical border-red-500/30' : doc.severity === 'HIGH' ? 'badge-high border-orange-500/30' : 'badge-low border-green-500/30'
                         }`}>
                           {doc.severity}
                         </span>
@@ -474,8 +482,8 @@ export default function KnowledgeRepo() {
                           }}
                           className={`text-xs px-3 py-1 rounded-lg border transition-colors inline-flex items-center gap-1 cursor-pointer ${
                             isSelected
-                              ? 'bg-primary text-white border-primary'
-                              : 'glass text-text-muted hover:text-foreground hover:bg-white/[0.06]'
+                              ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(56,189,248,0.4)]'
+                              : 'bg-black/30 border-hairline text-text-muted hover:text-primary-glow hover:border-primary-glow/50'
                           }`}
                         >
                           {isSelected ? 'Active' : 'Inspect'}

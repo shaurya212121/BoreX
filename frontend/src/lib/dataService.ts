@@ -260,3 +260,22 @@ export async function generateServerPdf(payload: Record<string, unknown>): Promi
   }
   return null
 }
+export async function getAutoDrafts() {
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/telemetry/stream?start=1700&end=3200&step=10`)
+    const data = await res.json()
+    const drafts = (data.stream || []).filter((d: any) => d.hazard_code)
+    const uniqueDrafts = []
+    const seen = new Set()
+    for (const d of drafts) {
+      if (!seen.has(d.hazard_code)) {
+        seen.add(d.hazard_code)
+        uniqueDrafts.push(d)
+      }
+    }
+    return uniqueDrafts
+  } catch (e) {
+    console.error('Failed to fetch auto drafts:', e)
+    return []
+  }
+}
