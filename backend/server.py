@@ -17,10 +17,9 @@ Endpoints:
 """
 import os
 import json
-from typing import Optional, Dict, Any, List
-from fastapi import FastAPI, UploadFile, File, Form, Query, Response
+from typing import Optional, Dict, Any
+from fastapi import FastAPI, UploadFile, File, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from services.telemetry_provider import SyntheticTelemetryProvider, FutureERTMACProvider
 from services.document_ingestion import DocumentIngestionPipeline

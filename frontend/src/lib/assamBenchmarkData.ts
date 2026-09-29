@@ -5547,6 +5547,8 @@ export interface TelemetryReading {
   hookloadKlbf: number
   pitVolumeBbl: number
   gasUnits: number
+  /** Optional hookload overpull reading in klbf */
+  overpullKlbf?: number
   formation: string
   statusText: string
   activeRiskWarning: string | null
@@ -5615,6 +5617,16 @@ export function getSyntheticTelemetry(depthM: number): TelemetryReading {
     activeWarning = 'CRITICAL ALERT: Offset IND-NWIS-06 took 24 bbl gas kick at 3,120m MD'
   }
 
+  // Compute overpull: deviation of hookload above expected free-rotating baseline
+  const expectedHookload = 120 + (depthM / 100) * 4.8
+  let overpull = Math.max(0, hookload - expectedHookload)
+  // Simulate high overpull at stuck-pipe horizons
+  if (depthM >= 2440 && depthM <= 2520) {
+    overpull = +(overpull + 35 + Math.abs(sinMod) * 15).toFixed(0)
+  } else if (depthM >= 2700 && depthM <= 2780) {
+    overpull = +(overpull + 25 + Math.abs(cosMod) * 10).toFixed(0)
+  }
+
   return {
     depthM,
     ropMh: +rop.toFixed(1),
@@ -5628,6 +5640,7 @@ export function getSyntheticTelemetry(depthM: number): TelemetryReading {
     hookloadKlbf: hookload,
     pitVolumeBbl: pitVol,
     gasUnits: gas,
+    overpullKlbf: overpull > 0 ? +overpull.toFixed(0) : undefined,
     formation: form.name,
     statusText: status,
     activeRiskWarning: activeWarning,
