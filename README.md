@@ -20,11 +20,7 @@
 
 </div>
 
----
 
-> **Formerly known as BoreX.** The project was renamed to **Well-Whisperer** for SIH 2026 submission under **Problem Statement 121**.
-
----
 
 ## 📑 Table of Contents
 
