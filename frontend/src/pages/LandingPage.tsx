@@ -192,44 +192,24 @@ export default function LandingPage() {
                 <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse-glow">
                   <Layers size={22} className="text-primary-glow" />
                 </div>
-                <span className="font-grotesk text-2xl font-bold tracking-[0.2em] text-foreground">
-                  Bore<span className="text-gradient">X</span>
+                <span className="font-grotesk text-2xl font-bold tracking-[0.12em] text-foreground">
+                  Well <span className="text-gradient">Whisperer</span>
                 </span>
               </motion.div>
 
               {/* Main Title — Word-by-word reveal */}
-              <h1 className="font-grotesk text-sm md:text-base tracking-[0.25em] text-primary uppercase mb-3 flex flex-wrap justify-center">
+              <h1 className="font-grotesk text-sm md:text-base tracking-[0.25em] text-primary uppercase mb-8 flex flex-wrap justify-center">
                 {titleWords.map((word, i) => (
                   <AnimatedWord key={word} word={word} delay={0.4 + i * 0.08} />
                 ))}
               </h1>
-
-              {/* Subtitle */}
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
-                className="font-sans text-xs sm:text-sm text-text-muted mb-3 text-center max-w-md font-normal"
-              >
-                AI-Powered Offset Well Knowledge & Decision Support Platform
-              </motion.p>
-
-              {/* Region tag */}
-              <motion.span
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 1.2 }}
-                className="font-mono text-[10px] px-4 py-1.5 glass border-primary/20 text-primary-glow tracking-[0.15em] uppercase mb-12 rounded-full"
-              >
-                Upper Assam Basin Demonstration
-              </motion.span>
 
               {/* CTA Button */}
               <motion.button
                 onClick={() => navigate('/app/map')}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.7, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="btn-primary pointer-events-auto"

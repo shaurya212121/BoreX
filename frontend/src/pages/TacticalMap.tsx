@@ -14,14 +14,12 @@ import {
   Layers,
   CheckCircle2,
   Key,
-  
-  
-  
-  
+  Download,
   Compass
 } from 'lucide-react'
 import type { Well, ActiveWellProgress, RiskAlert } from '../lib/supabase'
-import { getWells, getActiveWellProgress, getRiskAlerts, generateServerPdf } from '../lib/dataService'
+import { getWells, getActiveWellProgress, getRiskAlerts } from '../lib/dataService'
+import { exportDossierPdf } from '../lib/dossierPdfGenerator'
 import { getFormationAtDepth } from '../lib/assamBenchmarkData'
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -144,6 +142,63 @@ export default function TacticalMap() {
   const [planningMode, setPlanningMode] = useState(false)
   const [proposedWell, setProposedWell] = useState<{lat: number, lng: number} | null>(null)
   const [generatingPreSpud, setGeneratingPreSpud] = useState(false)
+  const [dossierNotification, setDossierNotification] = useState<string | null>(null)
+
+  const handleGeneratePreSpudDossier = async (lat: number, lng: number, wellName?: string) => {
+    setGeneratingPreSpud(true)
+    const targetTitle = wellName || `PROPOSED TARGET (${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E)`
+    setDossierNotification(`Compiling Risk Dossier for ${targetTitle}...`)
+    try {
+      const nearby = wells.filter(w => haversineKm(lat, lng, w.lat, w.lon) <= 15)
+      const payload = {
+        active_well_name: targetTitle,
+        current_depth_m: 0,
+        lat,
+        lng,
+        formation: "Pre-Spud Stratigraphic Sequence",
+        overall_risk_state: "PRE-SPUD EVALUATION",
+        overall_risk_probability: nearby.length > 0 ? "85.0%" : "25.0%",
+        overall_confidence: "95.0%",
+        telemetry: {},
+        predicted_risks: [
+          {
+            risk_type: "Offset Well Anomaly Proximity",
+            risk_class: nearby.length > 0 ? "HIGH" : "LOW",
+            risk_probability: nearby.length > 0 ? 85 : 30,
+            confidence: 90,
+            contributing_factors: [
+              "Geospatial Proximity to Historical Offset Trajectories",
+              "Assam Basin Stratigraphic Sequence Lookahead",
+              nearby.length > 0 ? `${nearby.length} offset wells identified within 15km perimeter` : "No immediate offset anomalies"
+            ],
+            recommended_mitigation: "Pre-stage lost circulation materials and calibrate mud program according to nearby Barail/Tipam pore pressures."
+          }
+        ],
+        nearby_wells: nearby.map(w => ({
+          name: w.name,
+          distance_km: haversineKm(lat, lng, w.lat, w.lon),
+          direction: "Radial Offset",
+          total_depth_m: w.total_depth_m,
+          formation: "Assam Strata"
+        }))
+      }
+
+      const filename = `WellWhisperer_PreSpud_Dossier_${lat.toFixed(3)}N_${lng.toFixed(3)}E.pdf`
+      const success = await exportDossierPdf(payload, filename)
+      if (success) {
+        setDossierNotification(`Dossier downloaded: ${filename}`)
+      } else {
+        setDossierNotification(`Dossier compilation failed. Please retry.`)
+      }
+      setTimeout(() => setDossierNotification(null), 4000)
+    } catch (err) {
+      console.error('Failed to generate pre-spud dossier:', err)
+      setDossierNotification(`Error generating dossier.`)
+      setTimeout(() => setDossierNotification(null), 3000)
+    } finally {
+      setGeneratingPreSpud(false)
+    }
+  }
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -273,6 +328,24 @@ export default function TacticalMap() {
 
   return (
     <div className="flex flex-col h-full w-full text-foreground select-none relative overflow-hidden" style={{ background: '#050508' }}>
+      {/* Pre-Spud Dossier Compilation Notification Toast */}
+      <AnimatePresence>
+        {dossierNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-[2000] glass px-5 py-2.5 rounded-2xl border border-accent/40 shadow-2xl flex items-center gap-3 text-xs text-accent font-medium backdrop-blur-md pointer-events-auto"
+          >
+            {generatingPreSpud ? (
+              <Download size={15} className="animate-bounce text-accent" />
+            ) : (
+              <CheckCircle2 size={15} className="text-emerald-400" />
+            )}
+            <span className="font-sans">{dossierNotification}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Ã¢â€â‚¬Ã¢â€â‚¬ Top Floating Tactical HUD Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="absolute top-5 left-5 right-5 sm:top-6 sm:left-6 sm:right-6 z-[1000] flex flex-wrap items-center justify-between gap-3.5 pointer-events-none">
         {/* Left Stats Pill */}
@@ -452,7 +525,14 @@ export default function TacticalMap() {
                   <Marker
                     position={[w.lat, w.lon]}
                     icon={getOffsetIcon(isRisky)}
-                    eventHandlers={{ click: () => setSelectedWell(w) }}
+                    eventHandlers={{ 
+                      click: () => {
+                        setSelectedWell(w)
+                        if (planningMode) {
+                          handleGeneratePreSpudDossier(w.lat, w.lon, w.name)
+                        }
+                      } 
+                    }}
                   >
                     <Popup className="nwis-popup">
                       <div className="p-1 min-w-[220px]">
@@ -471,12 +551,22 @@ export default function TacticalMap() {
                             <span>{wellAlerts.length} correlated hazard(s) at current horizon</span>
                           </div>
                         )}
+                        {planningMode && (
+                          <button
+                            onClick={() => handleGeneratePreSpudDossier(w.lat, w.lon, w.name)}
+                            disabled={generatingPreSpud}
+                            className="w-full mt-2.5 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-accent/20 hover:bg-accent/30 text-accent font-semibold text-[11px] rounded-lg border border-accent/40 transition-colors cursor-pointer"
+                          >
+                            <Download size={12} className={generatingPreSpud ? "animate-bounce" : ""} />
+                            <span>{generatingPreSpud ? "Compiling..." : `Download Dossier (${w.name})`}</span>
+                          </button>
+                        )}
                         <div className="mt-2 text-right">
                           <button
                             onClick={() => setSelectedWell(w)}
-                            className="text-[10px] text-primary-glow hover:underline font-medium"
+                            className="text-[10px] text-primary-glow hover:underline font-medium cursor-pointer"
                           >
-                            View Full Intelligence Ã¢â€ â€™
+                            View Full Intelligence →
                           </button>
                         </div>
                       </div>
@@ -509,7 +599,10 @@ export default function TacticalMap() {
               {planningMode && (
                 <PlanningModeController 
                   enabled={planningMode} 
-                  onPinDrop={(lat, lng) => setProposedWell({lat, lng})} 
+                  onPinDrop={(lat, lng) => {
+                    setProposedWell({lat, lng})
+                    handleGeneratePreSpudDossier(lat, lng)
+                  }} 
                 />
               )}
 
@@ -529,6 +622,11 @@ export default function TacticalMap() {
                   <Marker 
                     position={[proposedWell.lat, proposedWell.lng]}
                     icon={customProposedIcon}
+                    eventHandlers={{
+                      click: () => {
+                        handleGeneratePreSpudDossier(proposedWell.lat, proposedWell.lng)
+                      }
+                    }}
                   >
                     <Popup className="nwis-popup">
                       <div className="p-2 min-w-[240px]">
@@ -536,56 +634,15 @@ export default function TacticalMap() {
                           <Target size={14} className="animate-pulse" />
                           PROPOSED WELL TARGET
                         </div>
-                        <div className="text-xs text-slate-300 font-mono mb-1">LAT: {proposedWell.lat.toFixed(4)}Â°</div>
-                        <div className="text-xs text-slate-300 font-mono mb-3">LNG: {proposedWell.lng.toFixed(4)}Â°</div>
+                        <div className="text-xs text-slate-300 font-mono mb-1">LAT: {proposedWell.lat.toFixed(4)}°</div>
+                        <div className="text-xs text-slate-300 font-mono mb-3">LNG: {proposedWell.lng.toFixed(4)}°</div>
                         <button
-                          onClick={async () => {
-                            setGeneratingPreSpud(true)
-                            const nearby = wells.filter(w => haversineKm(proposedWell.lat, proposedWell.lng, w.lat, w.lon) <= 15)
-                            try {
-                              const blob = await generateServerPdf({
-                                active_well_name: "PROPOSED TARGET (VIRTUAL)",
-                                current_depth_m: 0,
-                                formation: "Pre-Spud Estimation",
-                                overall_risk_state: "PRE-SPUD EVALUATION",
-                                overall_risk_probability: "N/A",
-                                overall_confidence: "95.0%",
-                                telemetry: {},
-                                predicted_risks: [
-                                  {
-                                    risk_type: "Offset Well Anomaly Proximity",
-                                    risk_class: nearby.length > 0 ? "HIGH" : "LOW",
-                                    risk_probability: 85,
-                                    confidence: 90,
-                                    contributing_factors: ["Geospatial Proximity", "Historical Offset Incidents", "Simulated Lithology"]
-                                  }
-                                ],
-                                nearby_wells: nearby.map(w => ({
-                                  name: w.name,
-                                  distance_km: haversineKm(proposedWell.lat, proposedWell.lng, w.lat, w.lon),
-                                  direction: "TBD",
-                                  total_depth_m: w.total_depth_m,
-                                  formation: "Assam Strata"
-                                }))
-                              })
-                              if (blob) {
-                                const url = window.URL.createObjectURL(blob)
-                                const a = document.createElement("a")
-                                a.href = url
-                                a.download = `NWIS_PreSpud_Dossier_Target.pdf`
-                                document.body.appendChild(a)
-                                a.click()
-                                window.URL.revokeObjectURL(url)
-                                document.body.removeChild(a)
-                              }
-                            } finally {
-                              setGeneratingPreSpud(false)
-                            }
-                          }}
+                          onClick={() => handleGeneratePreSpudDossier(proposedWell.lat, proposedWell.lng)}
                           disabled={generatingPreSpud}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent/20 hover:bg-accent/40 text-accent font-semibold text-[11px] rounded-lg border border-accent/50 transition-colors"
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent/20 hover:bg-accent/40 text-accent font-semibold text-[11px] rounded-lg border border-accent/50 transition-colors shadow-sm cursor-pointer"
                         >
-                          {generatingPreSpud ? "Compiling Dossier..." : "Generate Risk Dossier"}
+                          <Download size={14} className={generatingPreSpud ? "animate-bounce" : ""} />
+                          {generatingPreSpud ? "Compiling & Downloading Dossier..." : "Download Pre-Spud Risk Dossier"}
                         </button>
                       </div>
                     </Popup>

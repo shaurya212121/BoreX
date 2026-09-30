@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Download,
@@ -16,8 +16,9 @@ import {
   getWells,
   getRiskAlerts,
   fetchBackendTelemetry,
-  generateServerPdf, getAutoDrafts,
+  getAutoDrafts,
 } from '../lib/dataService'
+import { exportDossierPdf } from '../lib/dossierPdfGenerator'
 import { getFormationAtDepth } from '../lib/assamBenchmarkData'
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -256,18 +257,8 @@ export default function Reports() {
         })),
       }
 
-      const blob = await generateServerPdf(payload)
-      if (blob) {
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `NWIS_Risk_Dossier_${profile.well.name}.pdf`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-        return
-      }
+      const filename = `WellWhisperer_Risk_Dossier_${profile.well.name}.pdf`
+      await exportDossierPdf(payload, filename)
     } catch (err) {
       console.warn('Server PDF fallback to print:', err)
       window.print()

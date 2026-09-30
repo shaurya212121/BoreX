@@ -89,7 +89,7 @@ export default function DashboardLayout() {
               </div>
               <div>
                 <div className="font-grotesk font-bold text-sm tracking-wide text-foreground flex items-center gap-1.5">
-                  Bore<span className="text-gradient font-bold">X</span> <span className="text-primary-glow font-bold">NWIS</span>
+                  Well <span className="text-gradient font-bold">Whisperer</span>
                 </div>
                 <div className="text-[9px] text-text-muted font-medium tracking-[0.15em] uppercase">
                   Nearby Wells Intelligence
